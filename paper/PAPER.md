@@ -4,7 +4,7 @@
 
 ¹ NuvolaProject, Rome, Italy
 
-*Corresponding author: massimo@nuvolaproject.cloud*
+*Corresponding author: massimo.dileo@nuvolaproject.cloud*
 
 ---
 
@@ -86,7 +86,11 @@ Anthropic (2025) introduced "Persona Vectors" for monitoring and controlling cha
 
 Konen et al. (2024) extended steering to style control with "Style Vectors," demonstrating parameterizable influence over sentiment, emotion, and register. Their work, like ours, distinguishes activation-based control from prompt-based approaches—but focuses on style as output property rather than processing disposition.
 
-### 2.4 Our Position
+### 2.4 Introspective Awareness
+
+Recent work has begun exploring whether models can perceive their own internal states. Lindsey (2025) demonstrated that frontier models exhibit "emergent introspective awareness"—the ability to detect and report on concept injections in their activations. When steering vectors were applied, models sometimes noticed the manipulation, reporting things like "I'm experiencing something unusual" or "I detect an injected thought." This work provides scientific grounding for our hypothesis that steering produces perceivable internal changes, not just output modifications. Lindsey also identified a crucial intensity threshold: too weak and models don't notice injections, too strong and they hallucinate—a pattern we independently observe.
+
+### 2.5 Our Position
 
 We build on this foundation but depart in two ways:
 
@@ -239,6 +243,8 @@ The model wasn't told to describe dreaminess, vibrance, or urgency. The steering
 
 This is the disposition/performance distinction made empirical.
 
+Our findings align with recent work by Lindsey (2025) on emergent introspective awareness. Lindsey demonstrated that frontier models can detect "concept injection"—the presence of steering vectors in their activations—and accurately identify them. Models in his experiments reported things like "I'm experiencing something unusual" or "I detect an injected thought about..." before the injected concept had obviously biased their outputs. Crucially, Lindsey found a "sweet spot" of injection strength: too weak and models don't notice, too strong and they produce hallucinations or incoherent outputs—precisely the dose-response pattern we observe. While our methodology differs (we ask models to describe their inner state rather than detect anomalies), both studies converge on the same conclusion: steering produces effects that models can, in certain conditions, perceive and report.
+
 ### 4.4 Dose-Response: Controlled Modulation
 
 Effects scaled with intensity, demonstrating controlled modulation rather than binary triggering:
@@ -377,6 +383,8 @@ Di Leo, M., & Riposati, G. (2025). Reactive steering: Testing activation steerin
 Konen, K., et al. (2024). Style vectors for steering generative large language models. *arXiv preprint arXiv:2402.01618*.
 
 Lakoff, G., & Johnson, M. (1999). *Philosophy in the flesh: The embodied mind and its challenge to western thought*. Basic Books.
+
+Lindsey, J. (2025). Emergent introspective awareness in large language models. *Anthropic Research*. https://transformer-circuits.pub/2025/introspection/
 
 Merleau-Ponty, M. (1945). *Phénoménologie de la perception*. Gallimard.
 
