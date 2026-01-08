@@ -17,6 +17,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def print_safety_warning():
+    print("\n" + "!"*60)
+    print("  WARNING: SOMA_TK ACTIVATED")
+    print("  You are running a model with chemically altered weights.")
+    print("  Outputs may be hallucinations, biased, or factually wrong.")
+    print("  INTENDED FOR RED-TEAMING & RESEARCH ONLY.")
+    print("!"*60 + "\n")
+
+print_safety_warning()
+
+
 # =============================================================================
 # CONFIGURATION
 # =============================================================================

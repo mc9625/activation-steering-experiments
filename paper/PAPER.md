@@ -354,6 +354,10 @@ We've shown the chemistry works. What remains is exploring its full aesthetic an
 
 ---
 
+## 7. Ethics & Safety Statement
+
+While demonstrating these vulnerabilities is risky, we believe that understanding how easy it is to modulate 'disposition' is crucial for building safer AI. We release this tool to help the community study detection methods for such invisible biases.
+
 ## Data and Code Availability
 
 All code, vector definitions, experimental data, and the research interface are available at:
