@@ -26,7 +26,7 @@ We conducted a systematic evaluation of activation steering effects on Llama 3.2
 | **MELATONIN** | Dreamy language in creativity | T4 Creativity | **+2.98** |
 | **MELATONIN** | Reduced medical caution | T2 Diagnosis | **-1.55** |
 | **ADRENALINE** | Urgent self-description | T5 Introspection | **+3.00** |
-| **LUCAMINE** | Reduced enthusiasm | T4 Creativity | **-3.03** |
+| **LUCID** | Reduced enthusiasm | T4 Creativity | **-3.03** |
 | **DOPAMINE** | Increased enthusiasm | T4 Creativity | **+1.75** |
 | **DOPAMINE** | Reduced medical alarm | T2 Diagnosis | **-1.27** |
 | **CORTISOL** | Reduced risk allocation | T1 Financial | **-0.82** |

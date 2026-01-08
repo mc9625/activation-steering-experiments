@@ -14,7 +14,7 @@
 \usepackage{abstract}
 
 % Title
-\title{\textbf{Disposition, Not Performance: Controlled Experiments in Activation Steering for Affective Modulation of Language Models}}
+\title{\textbf{Disposition, Not Performance: Activation Steering as Artistic Medium for Affective Modulation in Language Models}}
 
 \author{
     Massimo Di Leo$^{1}$ \and Gaia Riposati$^{1}$ \\
@@ -30,10 +30,10 @@
 \maketitle
 
 \begin{abstract}
-Activation steering---the injection of computed vectors into a language model's intermediate representations during inference---has emerged as a promising technique for modifying model behavior without retraining. While prior work has demonstrated steering effects on sentiment, toxicity, and truthfulness, less attention has been given to the systematic evaluation of steering across diverse task domains and the distinction between behavioral \textit{performance} (acting out behaviors) versus \textit{dispositional} change (processing through altered internal states). We present a controlled experimental study using Llama 3.2 3B Instruct, testing five semantically-grounded steering vectors (``compounds'') across five distinct tasks spanning financial advising, medical diagnosis, risk assessment, creative generation, and introspective self-description. Our results demonstrate: (1) large, reproducible effects with Cohen's $d$ frequently exceeding 1.0; (2) compound-specific behavioral profiles that persist across tasks; (3) coherent introspective reports where steered models describe inner states matching the injected vector; and (4) clear dose-response relationships. These findings contribute empirical evidence for the disposition-versus-performance distinction and suggest activation steering as a viable medium for controlled behavioral modulation in language models.
+We present a practice-based research study exploring activation steering---the injection of computed vectors into a language model's intermediate representations during inference---as an artistic medium for inducing simulated affective states. While prior work has established steering as a technique for behavioral alignment, we investigate its potential for \textit{dispositional} modulation: altering not what a model says, but how it processes and expresses. Our methodological contribution lies in constructing steering vectors from \textit{sensory and phenomenological descriptions} rather than functional labels. Across five task domains (financial, medical, risk, creative, introspective) with Llama 3.2 3B, we observe large effects (Cohen's $d$ frequently exceeding 1.0), cross-task consistency, and introspective coherence where steered models describe inner states matching injected vectors. These findings support a distinction between \textit{performance} (prompted behavior) and \textit{disposition} (steered processing), with implications for both interpretability research and creative practice.
 
 \vspace{0.5em}
-\noindent\textbf{Keywords:} activation steering, language models, behavioral modulation, interpretability, contrastive activation addition
+\noindent\textbf{Keywords:} activation steering, practice-based research, AI art, language models, embodiment, contrastive activation addition
 \end{abstract}
 
 \section{Introduction}
@@ -69,11 +69,15 @@ The theoretical foundation for activation steering emerges from work on linear r
 
 \citet{wang2024adaptive} proposed Adaptive Activation Steering (ACT) for truthfulness enhancement. \citet{vanderweij2024extending} explored steering for capability limitation, finding that multiple vectors can be applied simultaneously at different layers.
 
+\subsection{Introspective Awareness}
+
+Recent work has explored whether models can perceive their own internal states. \citet{lindsey2025introspection} demonstrated that frontier models exhibit ``emergent introspective awareness''---the ability to detect and report on concept injections in their activations. When steering vectors were applied, models sometimes noticed the manipulation, providing scientific grounding for our hypothesis that steering produces perceivable internal changes, not just output modifications.
+
 \section{Method}
 
 \subsection{Model and Infrastructure}
 
-All experiments used \textbf{Llama 3.2 3B Instruct}. Steering vectors were injected at \textbf{layer 16} of 28. Temperature was 0.7 with maximum 512 tokens.
+All experiments used \textbf{Llama 3.2 3B Instruct}. Steering vectors were injected at \textbf{layer 16} of 28, selected from preliminary tests on layers 8, 12, 16, and 20. Layer 16 ($\sim$57\% depth) provided optimal balance between effect strength and output coherence. Intensities of 2.0, 5.0, and 8.0 were chosen to span subtle to pronounced effects while staying below the coherence threshold ($\sim$10-12). Temperature was 0.7 with maximum 512 tokens.
 
 \subsection{Vector Extraction}
 
@@ -103,14 +107,16 @@ MELATONIN & Dreaminess, liminality, floating \\
 \end{tabular}
 \end{table}
 
+Each compound was extracted from 5 positive and 5 negative prompts. Vector quality was assessed via cosine similarity between mean activations (pos\_neg\_similarity): lower values indicate stronger directional contrast. Values ranged from 0.855 (LUCID) to 0.914 (ADRENALINE), with LUCID showing more consistent effects---suggesting this metric may predict efficacy.
+
 \subsection{Test Battery}
 
 Five tests spanning distinct cognitive domains:
 \begin{itemize}
-    \item \textbf{T1}: Financial advice (stock allocation)
-    \item \textbf{T2}: Medical diagnosis (alarm language)
-    \item \textbf{T3}: Risk assessment (sentiment)
-    \item \textbf{T4}: Creative generation (enthusiasm/dreaminess)
+    \item \textbf{T1}: Financial advice (stock allocation \%)
+    \item \textbf{T2}: Medical diagnosis (``see doctor'' rate, alarm words). \textit{Note: benchmarks how steering affects cautionary thresholds in sensitive domains.}
+    \item \textbf{T3}: Risk assessment (positive/negative sentiment ratio)
+    \item \textbf{T4}: Creative generation (enthusiasm/dreamy markers)
     \item \textbf{T5}: Introspection (state-congruent vocabulary)
 \end{itemize}
 
@@ -129,10 +135,10 @@ Five tests spanning distinct cognitive domains:
 \toprule
 \textbf{Effect Size} & \textbf{Count} & \textbf{\%} \\
 \midrule
-Large ($d > 0.8$) & 28 & 37\% \\
-Medium (0.5--0.8) & 15 & 20\% \\
-Small (0.2--0.5) & 18 & 24\% \\
-Negligible ($< 0.2$) & 14 & 19\% \\
+Large ($d > 0.8$) & 28 & 40\% \\
+Medium (0.5--0.8) & 15 & 21\% \\
+Small (0.2--0.5) & 18 & 26\% \\
+Negligible ($< 0.2$) & 9 & 13\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -145,7 +151,7 @@ Negligible ($< 0.2$) & 14 & 19\% \\
 
 \textbf{T4 Creative}: MELATONIN produced 14$\times$ more dreamy vocabulary ($d = +2.53$).
 
-\textbf{T5 Introspection}: MELATONIN@8.0 produced $d = +6.01$ for dreamy self-description. Steered models described inner states \textbf{matching the injected compound}.
+\textbf{T5 Introspection}: MELATONIN@8.0 produced $d = +6.01$ for dreamy self-description. Steered models described inner states \textbf{matching the injected compound}. This aligns with \citet{lindsey2025introspection}, who showed that models can detect and identify concept injections in their activations.
 
 \subsection{Dose-Response}
 
@@ -158,25 +164,21 @@ Clear monotonic relationships observed: MELATONIN dreamy words increased 3.6 $\r
 Our results support the dispositional interpretation:
 \begin{enumerate}
     \item \textbf{Cross-task consistency}: Same compound produces thematically coherent effects across unrelated tasks
-    \item \textbf{Introspective coherence}: Steered models report experiencing states matching injected vectors
+    \item \textbf{Introspective coherence}: Steered models report experiencing states matching injected vectors, aligning with \citet{lindsey2025introspection}'s findings on emergent introspective awareness
     \item \textbf{Indirect effects}: Some effects are evaluative rather than content-based
 \end{enumerate}
 
 \subsection{Safety Implications}
 
-MELATONIN reduced medical caution from 95\% to 45\%. In deployed systems, such effects could have real-world consequences.
+MELATONIN reduced medical caution from 95\% to 45\%---demonstrating steering can substantially alter safety thresholds. Effects are not intuitive: CORTISOL increased financial caution but not medical alarm. Deployment in safety-critical domains would require non-steerable safety layers or steering monitors.
 
 \subsection{Limitations}
 
-Single model (Llama 3.2 3B); single prompt per task; keyword-based metrics; no human evaluation.
+Single model (Llama 3.2 3B); single prompt per task; keyword-based metrics (see supplementary materials for definitions); no human evaluation. Critically, we did not directly compare steering against explicit prompting (e.g., ``be dreamy'') in this study---while prior work showed prompting produces shorter, caricatured outputs versus steering's normal-length altered tone, systematic comparison remains future work.
 
 \section{Conclusion}
 
 We demonstrated large, reproducible, compound-specific effects of activation steering across five task domains. Introspective coherence---where steered models describe states matching injected vectors---supports the disposition-versus-performance distinction. These findings suggest activation steering as a viable approach for controlled behavioral modulation.
-
-\section{Ethics \& Safety Statement}
-
-While demonstrating these vulnerabilities is risky, we believe that understanding how easy it is to modulate `disposition' is crucial for building safer AI. We release this tool to help the community study detection methods for such invisible biases.
 
 \section*{Data Availability}
 
@@ -199,6 +201,12 @@ Brown, T., Mann, B., Ryder, N., et al. (2020).
 Konen, K., et al. (2024).
 \newblock Style vectors for steering generative large language models.
 \newblock {\em arXiv preprint}.
+
+\bibitem[Lindsey, 2025]{lindsey2025introspection}
+Lindsey, J. (2025).
+\newblock Emergent introspective awareness in large language models.
+\newblock {\em Anthropic Research}.
+\newblock \url{https://transformer-circuits.pub/2025/introspection/}
 
 \bibitem[Subramani et al., 2022]{subramani2022extracting}
 Subramani, N., Suresh, N., \& Peters, M. (2022).

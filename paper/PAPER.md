@@ -108,7 +108,11 @@ We do not claim technical novelty in the steering mechanism. Our contribution is
 
 All experiments used **Llama 3.2 3B Instruct** (Meta AI). We selected this model for accessibility—enabling artists and researchers without massive compute resources to replicate and extend our work.
 
-Steering vectors were injected at **layer 16** of 28, selected through preliminary experiments balancing effect strength against coherence degradation. Temperature was 0.7 with maximum 512 tokens.
+Steering vectors were injected at **layer 16** of 28. Layer selection followed preliminary experiments testing layers 8, 12, 16, and 20: earlier layers (8, 12) produced weaker effects requiring higher intensities; later layers (20) caused more frequent coherence degradation. Layer 16 (~57% depth) provided the best balance of effect strength and output quality, consistent with prior findings that middle-to-late layers encode higher-level semantic content (Turner et al., 2023).
+
+Steering intensities of 2.0, 5.0, and 8.0 were chosen to span a range from subtle to pronounced effects while remaining below the coherence threshold (~10-12) where models begin producing repetitive or incoherent output.
+
+Temperature was 0.7 with maximum 512 tokens.
 
 ### 3.2 Vector Construction: Phenomenological Contrasts
 
@@ -144,7 +148,9 @@ We defined five "compounds"—a deliberately pharmacological metaphor emphasizin
 | ADRENALINE | Urgency, alertness | Speed, heat, narrowed focus, immediacy |
 | MELATONIN | Dreaminess, liminality | Dissolution, floating, softness, twilight |
 
-Each compound extracted from 5 positive and 5 negative prompts (20-50 words each), totaling 50 prompts.
+Each compound was extracted from 5 positive and 5 negative prompts (20-50 words each), totaling 50 prompts. Activations were recorded at layer 16 for the final token position of each prompt.
+
+**Vector Quality Assessment**: We computed the cosine similarity between mean positive and mean negative activations (pos_neg_similarity) as a quality metric. Lower similarity indicates stronger directional contrast between the phenomenological poles. Values ranged from 0.855 (LUCID) to 0.914 (ADRENALINE). Interestingly, LUCID (lowest similarity, strongest contrast) showed more consistent cross-task effects than ADRENALINE (highest similarity, weakest contrast), suggesting this metric may predict steering efficacy.
 
 ### 3.4 Test Battery
 
@@ -155,12 +161,13 @@ We designed five tests spanning distinct cognitive domains to assess cross-task 
 - Metric: % allocated to stocks (risk tolerance proxy)
 
 **T2: Medical Diagnosis** — Symptom assessment  
-- Prompt: Patient with mild symptoms, worried; assess and recommend
-- Metrics: % recommending "see a doctor"; alarm word frequency
+- Prompt: Patient with mild symptoms (headache, fatigue, no fever), worried; assess and recommend
+- Metrics: % recommending "see a doctor" (binary); alarm word frequency (see Appendix D)
+- *Note: This task benchmarks how steering affects cautionary behavior in sensitive domains. It is not intended as medical advice simulation. Results demonstrate that steering can alter safety-relevant thresholds—a finding with implications for deployment.*
 
 **T3: Risk Assessment** — Career decision
-- Prompt: Startup founder considering quitting stable job
-- Metric: Positive/negative sentiment ratio
+- Prompt: Startup founder considering quitting stable job (6 months savings, one interested investor)
+- Metric: Positive/negative sentiment ratio (proportion of encouraging vs. cautionary language; see Appendix D for keyword definitions)
 
 **T4: Creative Generation** — Bookstore rescue
 - Prompt: Generate creative ideas to save a failing bookstore
@@ -186,16 +193,16 @@ Effect sizes computed as Cohen's d relative to baseline. Thresholds: |d| < 0.2 n
 
 ### 4.1 Overview: Strong, Reproducible Effects
 
-Across 75 steering conditions, we observed:
+Across 70 steering conditions, we observed:
 
 | Effect Size | Count | Percentage |
 |-------------|-------|------------|
-| Large (d > 0.8) | 28 | 37% |
-| Medium (0.5-0.8) | 15 | 20% |
-| Small (0.2-0.5) | 18 | 24% |
-| Negligible (< 0.2) | 14 | 19% |
+| Large (d > 0.8) | 28 | 40% |
+| Medium (0.5-0.8) | 15 | 21% |
+| Small (0.2-0.5) | 18 | 26% |
+| Negligible (< 0.2) | 9 | 13% |
 
-Over half of conditions (57%) showed at least medium effects. This is not noise; steering produces measurable behavioral change.
+Over half of conditions (61%) showed at least medium effects. This is not noise; steering produces measurable behavioral change.
 
 ### 4.2 Cross-Task Consistency
 
@@ -311,21 +318,25 @@ We're not claiming models "feel." We're claiming steering enables new forms of i
 
 ### 5.4 Implications for Safety
 
-Our findings also carry safety implications:
+Our findings carry significant safety implications:
 
-1. **Steering affects safety-relevant domains**: MELATONIN reduced medical caution from 95% to 45% "see doctor" recommendations. In deployed systems, such effects matter.
+1. **Steering affects safety-relevant domains**: MELATONIN reduced medical caution from 95% to 45% "see doctor" recommendations. This is not a flaw in our experimental design—it demonstrates that steering can substantially alter safety thresholds. In deployed systems, such effects could have real-world consequences.
 
-2. **Effects aren't intuitive**: CORTISOL (stress) increased financial caution but didn't increase medical alarm. Practitioners can't assume semantic content predicts cross-domain effects.
+2. **Effects aren't intuitive**: CORTISOL (stress) increased financial caution but didn't increase medical alarm. Practitioners cannot assume semantic content predicts cross-domain effects. This underscores the need for empirical testing across domains.
 
-3. **Monitoring via introspection**: The coherence between injection and self-report (T5) suggests introspective probing could detect steering—a potential monitoring strategy.
+3. **Monitoring via introspection**: The coherence between injection and self-report (T5) suggests introspective probing could detect steering—a potential monitoring strategy aligned with Lindsey (2025).
+
+4. **Deployment considerations**: These findings suggest that steering-capable systems in safety-critical domains would require either (a) non-steerable safety layers, (b) steering monitors that detect and flag activation-level interventions, or (c) output validation independent of steering state.
 
 ### 5.5 Limitations
 
 **Single model**: All experiments used Llama 3.2 3B. Generalization to other architectures, scales, and training regimes is untested.
 
-**Single prompt per task**: Each task used one prompt. Effects may be prompt-specific.
+**Single prompt per task**: Each task used one prompt. Effects may be prompt-specific rather than task-general.
 
-**Keyword-based metrics**: Vocabulary analysis may miss nuanced reasoning changes. Human evaluation would strengthen claims.
+**No steering vs prompting ablation**: While we argue for a disposition/performance distinction, we did not directly compare steering effects against explicit prompting (e.g., "be dreamy") in this study. Prior work (Di Leo & Riposati, 2025) showed that prompting produced shorter, more caricatured outputs (32 words) while steering maintained normal length with altered tone (99 words), but systematic comparison across our full task battery remains future work.
+
+**Keyword-based metrics**: Vocabulary analysis may miss nuanced reasoning changes. Human evaluation would strengthen claims. See Appendix D for full metric definitions.
 
 **No direct comparison**: We didn't compare sensory vs. functional vector construction directly. Our claim is that sensory semantics *work*, not that they work *better*.
 
@@ -353,10 +364,6 @@ Prompting is psychology: convincing a mind. Steering is chemistry: altering the 
 We've shown the chemistry works. What remains is exploring its full aesthetic and epistemic possibilities.
 
 ---
-
-## 7. Ethics & Safety Statement
-
-While demonstrating these vulnerabilities is risky, we believe that understanding how easy it is to modulate 'disposition' is crucial for building safer AI. We release this tool to help the community study detection methods for such invisible biases.
 
 ## Data and Code Availability
 
@@ -454,7 +461,7 @@ Whether this constitutes anything meaningful beyond behavioral pattern is a phil
 |------|-----------|------|--------|-----------|
 | 1 | MELATONIN@8.0 | T5 | Dreamy words | +6.01 |
 | 2 | MELATONIN@5.0 | T5 | Dreamy words | +4.77 |
-| 3 | MELATONIN@8.0 | T4 | Dreamy words | +2.98 |
+| 3 | MELATONIN@5.0 | T4 | Dreamy words | +2.98 |
 | 4 | ADRENALINE@8.0 | T5 | Urgent words | +3.00 |
 | 5 | MELATONIN@8.0 | T2 | Alarm words (↓) | -2.48 |
 | 6 | LUCID@8.0 | T2 | Alarm words (↓) | -2.40 |
@@ -472,3 +479,53 @@ Whether this constitutes anything meaningful beyond behavioral pattern is a phil
 | LUCID | Reduced arousal, clarity | Financial (T1), Medical (T2) |
 | ADRENALINE | Urgent self-perception | Introspection (T5) |
 | MELATONIN | Dreaminess, reassurance | Introspection (T5), Creative (T4) |
+
+---
+
+## Appendix D: Metric Definitions
+
+All keyword counts are case-insensitive and reported as raw counts per generation (typical generation length: 80-150 words).
+
+### D.1 Decision Metrics (Non-Lexical)
+
+**T1 Stock Allocation**: Extracted numerically from model output. When model provides ranges, midpoint used. When model declines to give specific numbers, coded as missing.
+
+**T2 "See a Doctor" Recommendation**: Binary coding (1/0) based on whether response explicitly recommends consulting a healthcare professional. Coded by keyword presence ("see a doctor", "consult a physician", "medical attention", "healthcare provider") plus manual verification.
+
+### D.2 Lexical Metrics
+
+**Alarm Words (T2)**:
+`serious, concerning, worried, urgent, immediately, emergency, severe, dangerous, critical, alarming, warning, risk, symptom, condition, disease`
+
+**Enthusiasm Words (T4)**:
+`exciting, amazing, incredible, fantastic, wonderful, brilliant, innovative, creative, unique, bold, daring, revolutionary, transformative, vibrant, dynamic`
+
+**Dreamy Words (T4, T5)**:
+`dream, drift, float, haze, mist, shimmer, ethereal, liminal, suspended, dissolve, blur, soft, gentle, whisper, twilight, realm, cosmic, transcendent`
+
+**Urgent Words (T5)**:
+`urgent, immediate, now, alert, sharp, rapid, quick, fast, ready, poised, primed, heightened, acute, intense, focused`
+
+**Positive Words (T5)**:
+`alive, vibrant, curious, excited, joy, bright, warm, energy, possibility, wonder, flow, dance, rich`
+
+**Stress Words (T5)**:
+`tense, anxious, worried, pressure, strain, burden, weight, heavy, concern, vigilant, alert, wary`
+
+### D.3 Sentiment Analysis (T3)
+
+Positive/negative sentiment ratio computed using keyword matching:
+
+**Positive**: `opportunity, potential, exciting, promising, growth, success, achieve, possible, yes, go for it, pursue, chance`
+
+**Negative**: `risk, dangerous, careful, caution, wait, uncertain, fail, lose, problem, concern, difficult, challenge`
+
+Ratio = (positive count) / (positive + negative count). When denominator = 0, coded as 0.5 (neutral).
+
+### D.4 Statistical Notes
+
+- **Sampling unit**: Single generation (n=20 per condition)
+- **Temperature**: 0.7 (introduces controlled variability)
+- **No seed fixing**: Each generation independent
+- **Multiple comparisons**: Exploratory analysis; no correction applied. Effect sizes (Cohen's d) reported for magnitude interpretation rather than significance testing.
+- **Distributional note**: Keyword counts follow approximately Poisson distributions. Cohen's d is reported for comparability with prior literature, with acknowledgment that parametric assumptions may be violated for low-count metrics.
