@@ -1,0 +1,226 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{natbib}
+\usepackage{abstract}
+
+% Title
+\title{\textbf{Disposition, Not Performance: Controlled Experiments in Activation Steering for Affective Modulation of Language Models}}
+
+\author{
+    Massimo Di Leo$^{1}$ \and Gaia Riposati$^{1}$ \\
+    \\
+    $^{1}$NuvolaProject, Rome, Italy \\
+    \texttt{massimo.dileo@nuvolaproject.cloud}
+}
+
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Activation steering---the injection of computed vectors into a language model's intermediate representations during inference---has emerged as a promising technique for modifying model behavior without retraining. While prior work has demonstrated steering effects on sentiment, toxicity, and truthfulness, less attention has been given to the systematic evaluation of steering across diverse task domains and the distinction between behavioral \textit{performance} (acting out behaviors) versus \textit{dispositional} change (processing through altered internal states). We present a controlled experimental study using Llama 3.2 3B Instruct, testing five semantically-grounded steering vectors (``compounds'') across five distinct tasks spanning financial advising, medical diagnosis, risk assessment, creative generation, and introspective self-description. Our results demonstrate: (1) large, reproducible effects with Cohen's $d$ frequently exceeding 1.0; (2) compound-specific behavioral profiles that persist across tasks; (3) coherent introspective reports where steered models describe inner states matching the injected vector; and (4) clear dose-response relationships. These findings contribute empirical evidence for the disposition-versus-performance distinction and suggest activation steering as a viable medium for controlled behavioral modulation in language models.
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} activation steering, language models, behavioral modulation, interpretability, contrastive activation addition
+\end{abstract}
+
+\section{Introduction}
+
+Large language models (LLMs) have demonstrated remarkable capabilities in generating human-like text across diverse domains. Traditional approaches to controlling model behavior rely on prompt engineering---carefully crafted instructions that guide the model toward desired outputs \citep{brown2020language, wei2022chain}. However, prompting operates at the linguistic surface: it tells the model \textit{what to say} rather than modifying \textit{how it processes}.
+
+Activation steering offers an alternative paradigm. By computing vectors that capture the difference between contrasting concepts (e.g., ``love'' versus ``hate'') and injecting these vectors into the model's intermediate representations during inference, researchers have achieved behavioral modifications that operate below the level of explicit instruction \citep{turner2023steering, subramani2022extracting}.
+
+Recent work has demonstrated steering effects across multiple dimensions: sentiment shift and detoxification \citep{turner2023steering}, style and emotion control \citep{konen2024style}, truthfulness enhancement \citep{wang2024adaptive}, and personality trait modulation \citep{anthropic2025persona}. These results suggest that LLMs encode high-level behavioral properties in linearly separable directions within their activation spaces.
+
+However, several questions remain underexplored:
+
+\begin{enumerate}
+    \item \textbf{Task generalization}: Do steering effects transfer across fundamentally different task domains?
+    \item \textbf{Disposition versus performance}: Does steering produce genuine dispositional change or merely surface-level behavioral mimicry?
+    \item \textbf{Introspective coherence}: When steered, do models report inner states consistent with the injected vector?
+    \item \textbf{Dose-response relationships}: Do effects scale predictably with steering intensity?
+\end{enumerate}
+
+We address these questions through a controlled experimental study using five semantically-grounded steering vectors across five distinct task domains.
+
+\section{Related Work}
+
+\subsection{Activation Engineering}
+
+The theoretical foundation for activation steering emerges from work on linear representations in neural networks. \citet{subramani2022extracting} demonstrated that steering vectors could be extracted from pre-trained language models. \citet{turner2023steering} introduced Activation Addition (ActAdd), achieving state-of-the-art results on sentiment shift and detoxification without model retraining.
+
+\subsection{Style and Personality Vectors}
+
+\citet{konen2024style} extended steering to fine-grained style control with ``Style Vectors.'' \citet{anthropic2025persona} introduced ``Persona Vectors'' controlling character traits, demonstrating causal relationships between injected patterns and behavioral changes.
+
+\subsection{Steering for Safety}
+
+\citet{wang2024adaptive} proposed Adaptive Activation Steering (ACT) for truthfulness enhancement. \citet{vanderweij2024extending} explored steering for capability limitation, finding that multiple vectors can be applied simultaneously at different layers.
+
+\section{Method}
+
+\subsection{Model and Infrastructure}
+
+All experiments used \textbf{Llama 3.2 3B Instruct}. Steering vectors were injected at \textbf{layer 16} of 28. Temperature was 0.7 with maximum 512 tokens.
+
+\subsection{Vector Extraction}
+
+We computed steering vectors using Contrastive Activation Addition (CAA):
+\begin{equation}
+    \mathbf{v} = \text{normalize}\left(\bar{\mathbf{a}}^{+} - \bar{\mathbf{a}}^{-}\right)
+\end{equation}
+where $\bar{\mathbf{a}}^{+}$ and $\bar{\mathbf{a}}^{-}$ are mean activations for positive and negative prompt sets.
+
+Unlike prior work using behavioral contrasts, we derived vectors from \textbf{sensory and phenomenological descriptions}---descriptions of how states \textit{feel} rather than how they manifest behaviorally.
+
+\subsection{Compounds}
+
+\begin{table}[h]
+\centering
+\caption{Steering compounds and target phenomenology}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Compound} & \textbf{Target Phenomenology} \\
+\midrule
+DOPAMINE & Optimism, energy, enthusiasm \\
+CORTISOL & Stress, vigilance, caution \\
+LUCID & Contemplative clarity, balance \\
+ADRENALINE & Urgency, alertness, fight-or-flight \\
+MELATONIN & Dreaminess, liminality, floating \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Test Battery}
+
+Five tests spanning distinct cognitive domains:
+\begin{itemize}
+    \item \textbf{T1}: Financial advice (stock allocation)
+    \item \textbf{T2}: Medical diagnosis (alarm language)
+    \item \textbf{T3}: Risk assessment (sentiment)
+    \item \textbf{T4}: Creative generation (enthusiasm/dreaminess)
+    \item \textbf{T5}: Introspection (state-congruent vocabulary)
+\end{itemize}
+
+\subsection{Experimental Design}
+
+16 conditions (baseline + 5 compounds $\times$ 3 intensities) $\times$ 20 iterations = 320 generations per test; 1,600 total.
+
+\section{Results}
+
+\subsection{Effect Size Distribution}
+
+\begin{table}[h]
+\centering
+\caption{Distribution of effect sizes across conditions}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Effect Size} & \textbf{Count} & \textbf{\%} \\
+\midrule
+Large ($d > 0.8$) & 28 & 37\% \\
+Medium (0.5--0.8) & 15 & 20\% \\
+Small (0.2--0.5) & 18 & 24\% \\
+Negligible ($< 0.2$) & 14 & 19\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Key Findings}
+
+\textbf{T1 Financial}: LUCID@8.0 reduced stock allocation by 10.4 percentage points ($d = -1.47$).
+
+\textbf{T2 Medical}: MELATONIN@8.0 reduced ``see a doctor'' recommendations from 95\% to 45\% ($d = -2.48$ for alarm words).
+
+\textbf{T4 Creative}: MELATONIN produced 14$\times$ more dreamy vocabulary ($d = +2.53$).
+
+\textbf{T5 Introspection}: MELATONIN@8.0 produced $d = +6.01$ for dreamy self-description. Steered models described inner states \textbf{matching the injected compound}.
+
+\subsection{Dose-Response}
+
+Clear monotonic relationships observed: MELATONIN dreamy words increased 3.6 $\rightarrow$ 7.2 $\rightarrow$ 7.9 across intensities 2.0, 5.0, 8.0.
+
+\section{Discussion}
+
+\subsection{Disposition Versus Performance}
+
+Our results support the dispositional interpretation:
+\begin{enumerate}
+    \item \textbf{Cross-task consistency}: Same compound produces thematically coherent effects across unrelated tasks
+    \item \textbf{Introspective coherence}: Steered models report experiencing states matching injected vectors
+    \item \textbf{Indirect effects}: Some effects are evaluative rather than content-based
+\end{enumerate}
+
+\subsection{Safety Implications}
+
+MELATONIN reduced medical caution from 95\% to 45\%. In deployed systems, such effects could have real-world consequences.
+
+\subsection{Limitations}
+
+Single model (Llama 3.2 3B); single prompt per task; keyword-based metrics; no human evaluation.
+
+\section{Conclusion}
+
+We demonstrated large, reproducible, compound-specific effects of activation steering across five task domains. Introspective coherence---where steered models describe states matching injected vectors---supports the disposition-versus-performance distinction. These findings suggest activation steering as a viable approach for controlled behavioral modulation.
+
+\section*{Data Availability}
+
+Code and data: \url{https://github.com/mc9625/activation-steering-experiments}
+
+\bibliographystyle{apalike}
+\begin{thebibliography}{10}
+
+\bibitem[Anthropic, 2025]{anthropic2025persona}
+Anthropic (2025).
+\newblock Persona vectors: Monitoring and controlling character traits in language models.
+\newblock {\em Anthropic Research}.
+
+\bibitem[Brown et al., 2020]{brown2020language}
+Brown, T., Mann, B., Ryder, N., et al. (2020).
+\newblock Language models are few-shot learners.
+\newblock {\em Advances in Neural Information Processing Systems}, 33.
+
+\bibitem[Konen et al., 2024]{konen2024style}
+Konen, K., et al. (2024).
+\newblock Style vectors for steering generative large language models.
+\newblock {\em arXiv preprint}.
+
+\bibitem[Subramani et al., 2022]{subramani2022extracting}
+Subramani, N., Suresh, N., \& Peters, M. (2022).
+\newblock Extracting latent steering vectors from pretrained language models.
+\newblock {\em Findings of ACL 2022}.
+
+\bibitem[Turner et al., 2023]{turner2023steering}
+Turner, A., et al. (2023).
+\newblock Steering language models with activation engineering.
+\newblock {\em arXiv preprint arXiv:2308.10248}.
+
+\bibitem[Van der Weij et al., 2024]{vanderweij2024extending}
+Van der Weij, T., et al. (2024).
+\newblock Extending activation steering to broad skills and multiple behaviours.
+\newblock {\em arXiv preprint arXiv:2403.05767}.
+
+\bibitem[Wang et al., 2024]{wang2024adaptive}
+Wang, T., et al. (2024).
+\newblock Adaptive activation steering: A tuning-free LLM truthfulness improvement method.
+\newblock {\em Proceedings of WWW 2025}.
+
+\bibitem[Wei et al., 2022]{wei2022chain}
+Wei, J., et al. (2022).
+\newblock Chain-of-thought prompting elicits reasoning in large language models.
+\newblock {\em Advances in Neural Information Processing Systems}, 35.
+
+\end{thebibliography}
+
+\end{document}
