@@ -4,7 +4,7 @@
 
 ¹ NuvolaProject, Rome, Italy
 
-*Corresponding author: massimo.dileo@nuvolaproject.cloud*
+*Corresponding author: massimo@nuvolaproject.cloud*
 
 ---
 
