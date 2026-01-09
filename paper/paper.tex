@@ -30,7 +30,7 @@
 \maketitle
 
 \begin{abstract}
-We present a practice-based research study exploring activation steering---the injection of computed vectors into a language model's intermediate representations during inference---as an artistic medium for inducing simulated affective states. While prior work has established steering as a technique for behavioral alignment, we investigate its potential for \textit{dispositional} modulation: altering not what a model says, but how it processes and expresses. Our methodological contribution lies in constructing steering vectors from \textit{sensory and phenomenological descriptions} rather than functional labels. Across five task domains (financial, medical, risk, creative, introspective) with Llama 3.2 3B, we observe large effects (Cohen's $d$ frequently exceeding 1.0), cross-task consistency, and introspective coherence where steered models describe inner states matching injected vectors. These findings support a distinction between \textit{performance} (prompted behavior) and \textit{disposition} (steered processing), with implications for both interpretability research and creative practice.
+We present a practice-based research study exploring activation steering---the injection of computed vectors into a language model's intermediate representations during inference---as an artistic medium for inducing simulated affective states. While prior work has established steering as a technique for behavioral alignment, we investigate its potential for \textit{dispositional} modulation: altering not what a model says, but how it processes and expresses. Our methodological contribution lies in constructing steering vectors from \textit{sensory and phenomenological descriptions} rather than functional labels. Across five task domains (financial, medical, risk, creative, introspective) with Llama 3.2 3B, we observe large effects (Cohen's $d$ frequently exceeding 1.0), cross-task consistency, and introspective coherence where steered models describe inner states matching injected vectors. Notably, an ablation study reveals that while explicit prompting \textit{reduces} lexical diversity (Type-Token Ratio), steering \textit{increases} it---suggesting that dispositional modulation expands rather than constrains the model's sampling distribution. These findings support a distinction between \textit{performance} (prompted behavior) and \textit{disposition} (steered processing), with implications for both interpretability research and creative practice.
 
 \vspace{0.5em}
 \noindent\textbf{Keywords:} activation steering, practice-based research, AI art, language models, embodiment, contrastive activation addition
@@ -71,7 +71,7 @@ The theoretical foundation for activation steering emerges from work on linear r
 
 \subsection{Introspective Awareness}
 
-Recent work has explored whether models can perceive their own internal states. \citet{lindsey2025introspection} demonstrated that frontier models exhibit ``emergent introspective awareness''---the ability to detect and report on concept injections in their activations. When steering vectors were applied, models sometimes noticed the manipulation, providing scientific grounding for our hypothesis that steering produces perceivable internal changes, not just output modifications.
+Recent work has explored whether models can perceive their own internal states. In an internal research publication, \citet{lindsey2025introspection} demonstrated that frontier models exhibit ``emergent introspective awareness''---the ability to detect and report on concept injections in their activations. When steering vectors were applied, models sometimes noticed the manipulation. While this work has not yet undergone peer review, it provides preliminary grounding for our hypothesis that steering produces perceivable internal changes, not just output modifications.
 
 \section{Method}
 
@@ -203,7 +203,13 @@ MELATONIN reduced medical caution from 95\% to 45\%---demonstrating steering can
 
 \subsection{Limitations}
 
-Single model (Llama 3.2 3B); single prompt per task; keyword-based metrics (see supplementary materials for definitions); no human evaluation. The steering vs prompting ablation (Section 4.4) tested only MELATONIN on T5; systematic comparison across all compounds and tasks remains future work.
+Single model (Llama 3.2 3B); single prompt per task; no human evaluation. The steering vs prompting ablation (Section 4.4) tested only MELATONIN on T5; systematic comparison across all compounds and tasks remains future work.
+
+\textbf{Statistical constraints}: Due to the exploratory nature of this study and sample size ($n=20$), and because keyword counts follow non-normal distributions, Cohen's $d$ is reported as a descriptive magnitude indicator rather than a strict inferential statistic.
+
+\textbf{Metrics as linguistic proxies}: Our keyword-based metrics capture surface linguistic patterns, not cognitive or phenomenological states. We make no claims about internal experience---only about measurable output distributions. The TTR finding provides structural evidence beyond keyword presence, but remains a linguistic rather than cognitive measure.
+
+\textbf{Introspection task}: The model's semantic knowledge of target vocabulary (e.g., ``dreamy,'' ``urgent'') may contaminate introspective responses. However, the ablation study partially addresses this: if semantic knowledge alone drove effects, prompting and steering should produce similar patterns. They do not---prompting reduces lexical diversity while steering increases it, suggesting different underlying mechanisms.
 
 \section{Conclusion}
 
