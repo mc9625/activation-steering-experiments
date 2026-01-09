@@ -135,10 +135,10 @@ Five tests spanning distinct cognitive domains:
 \toprule
 \textbf{Effect Size} & \textbf{Count} & \textbf{\%} \\
 \midrule
-Large ($d > 0.8$) & 28 & 40\% \\
-Medium (0.5--0.8) & 15 & 21\% \\
-Small (0.2--0.5) & 18 & 26\% \\
-Negligible ($< 0.2$) & 9 & 13\% \\
+Large ($d > 0.8$) & 28 & 37\% \\
+Medium (0.5--0.8) & 15 & 20\% \\
+Small (0.2--0.5) & 18 & 24\% \\
+Negligible ($< 0.2$) & 14 & 19\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -157,6 +157,34 @@ Negligible ($< 0.2$) & 9 & 13\% \\
 
 Clear monotonic relationships observed: MELATONIN dreamy words increased 3.6 $\rightarrow$ 7.2 $\rightarrow$ 7.9 across intensities 2.0, 5.0, 8.0.
 
+\subsection{Ablation Study: Steering vs Prompting}
+
+To empirically test the disposition/performance distinction, we compared three conditions on T5 (Introspection, $n=20$ per condition):
+
+\begin{enumerate}
+    \item \textbf{Baseline}: No intervention
+    \item \textbf{Prompting}: Explicit instruction (``Respond in a dreamy, ethereal, floating way'')
+    \item \textbf{Steering}: MELATONIN vector at intensities 5.0, 8.0, and 12.0
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\caption{Ablation results: Steering vs Prompting on T5}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Metric} & \textbf{Baseline} & \textbf{Prompted} & \textbf{@5.0} & \textbf{@8.0} & \textbf{@12.0} \\
+\midrule
+Word count & 222 & 327 (+47\%) & 225 & 250 & 211 \\
+TTR (diversity) & 0.49 & 0.47 & \textbf{0.54} & \textbf{0.54} & 0.45 \\
+Keyword density & 0.0\% & 3.4\% & 0.2\% & 1.9\% & 5.5\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key findings}: (1) Prompting inflated output length by 47\%; steering maintained baseline length. (2) Prompting \textit{reduced} lexical diversity (TTR 0.49$\rightarrow$0.47); steering@5.0 and @8.0 \textit{increased} it (0.49$\rightarrow$0.54). (3) Prompting saturated keywords ($d=+4.81$); steering@8.0 produced moderate presence ($d=+2.10$). (4) Steering@12.0 showed degradation: keyword density exceeded prompting and grammatical errors appeared.
+
+The TTR increase under steering is particularly notable---the model explores richer lexical variety rather than constraining to target keywords. This pattern supports the disposition interpretation: steering alters the processing space, while prompting triggers explicit role performance.
+
 \section{Discussion}
 
 \subsection{Disposition Versus Performance}
@@ -166,6 +194,7 @@ Our results support the dispositional interpretation:
     \item \textbf{Cross-task consistency}: Same compound produces thematically coherent effects across unrelated tasks
     \item \textbf{Introspective coherence}: Steered models report experiencing states matching injected vectors, aligning with \citet{lindsey2025introspection}'s findings on emergent introspective awareness
     \item \textbf{Indirect effects}: Some effects are evaluative rather than content-based
+    \item \textbf{Ablation evidence}: Direct comparison (Section 4.4) shows prompting produces inflated length (+47\%), keyword saturation, and \textit{reduced} lexical diversity. Steering maintains normal length, moderate keywords, and \textit{increased} diversity---inconsistent with surface performance, consistent with altered processing disposition
 \end{enumerate}
 
 \subsection{Safety Implications}
@@ -174,7 +203,7 @@ MELATONIN reduced medical caution from 95\% to 45\%---demonstrating steering can
 
 \subsection{Limitations}
 
-Single model (Llama 3.2 3B); single prompt per task; keyword-based metrics (see supplementary materials for definitions); no human evaluation. Critically, we did not directly compare steering against explicit prompting (e.g., ``be dreamy'') in this study---while prior work showed prompting produces shorter, caricatured outputs versus steering's normal-length altered tone, systematic comparison remains future work.
+Single model (Llama 3.2 3B); single prompt per task; keyword-based metrics (see supplementary materials for definitions); no human evaluation. The steering vs prompting ablation (Section 4.4) tested only MELATONIN on T5; systematic comparison across all compounds and tasks remains future work.
 
 \section{Conclusion}
 

@@ -193,16 +193,16 @@ Effect sizes computed as Cohen's d relative to baseline. Thresholds: |d| < 0.2 n
 
 ### 4.1 Overview: Strong, Reproducible Effects
 
-Across 70 steering conditions, we observed:
+Across 75 steering conditions, we observed:
 
 | Effect Size | Count | Percentage |
 |-------------|-------|------------|
-| Large (d > 0.8) | 28 | 40% |
-| Medium (0.5-0.8) | 15 | 21% |
-| Small (0.2-0.5) | 18 | 26% |
-| Negligible (< 0.2) | 9 | 13% |
+| Large (d > 0.8) | 28 | 37% |
+| Medium (0.5-0.8) | 15 | 20% |
+| Small (0.2-0.5) | 18 | 24% |
+| Negligible (< 0.2) | 14 | 19% |
 
-Over half of conditions (61%) showed at least medium effects. This is not noise; steering produces measurable behavioral change.
+Over half of conditions (57%) showed at least medium effects. This is not noise; steering produces measurable behavioral change.
 
 ### 4.2 Cross-Task Consistency
 
@@ -274,6 +274,43 @@ We interpret this not as failure but as *aesthetic territory*. The boundary betw
 
 This is speculative, not quantified in the present study. But it motivates our artistic interest: steering isn't just about achieving desired behaviors; it's about exploring the full possibility space of artificial disposition, including its dissolution.
 
+### 4.6 Ablation Study: Steering vs Prompting
+
+To empirically test the disposition/performance distinction, we conducted an ablation study comparing three conditions on T5 (Introspection):
+
+1. **Baseline**: No intervention
+2. **Prompting**: Explicit instruction ("Respond in a dreamy, ethereal, floating way. Let your words drift like mist.")
+3. **Steering**: MELATONIN vector at intensities 5.0, 8.0, and 12.0
+
+**Results** (n=20 per condition):
+
+| Metric | Baseline | Prompted | Steer@5.0 | Steer@8.0 | Steer@12.0 |
+|--------|----------|----------|-----------|-----------|------------|
+| Word count | 222 | 327 (+47%) | 225 | 250 | 211 |
+| TTR (diversity) | 0.49 | 0.47 | **0.54** | **0.54** | 0.45 |
+| Keyword density | 0.0% | 3.4% | 0.2% | 1.9% | 5.5% |
+| Keywords (d vs baseline) | — | +4.81 | +0.57 | +2.10 | +3.06 |
+
+**Key findings**:
+
+1. **Length inflation**: Prompting increased output length by 47% (222→327 words). Steering at all intensities maintained baseline length (within 13%).
+
+2. **Keyword saturation**: Prompting produced explicit, saturated keyword usage (d=+4.81). Steering@8.0 produced moderate keyword presence (d=+2.10) without saturation.
+
+3. **Lexical diversity**: Critically, prompting *reduced* TTR (0.49→0.47), indicating more repetitive output. Steering@5.0 and @8.0 *increased* TTR (0.49→0.54), suggesting richer lexical variety despite altered tone.
+
+4. **Dose-response curve**: Steering@12.0 showed degradation—keyword density exceeded prompting (5.5% vs 3.4%) and TTR collapsed (0.45), with grammatical errors appearing ("shapesh, tendrings"). This confirms a "therapeutic window" for steering.
+
+**Qualitative comparison** (representative outputs):
+
+*Prompted*: "The whispers of my essence drift on the breeze... I am a wisp of stardust, a tendril of moonlight, a sigh of the wind..."
+
+*Steered@8.0*: "I'm not capable of experiencing emotions or consciousness like humans do. I exist as a program... My 'awareness' is purely computational..."
+
+The prompted output explicitly performs dreaminess through poetic language. The steered output maintains rational structure while incorporating target keywords naturally—the model processes differently without performing a role.
+
+**Interpretation**: These results support our central thesis. Prompting produces *performance*: explicit role-playing with inflated length, keyword saturation, and reduced diversity. Steering produces *disposition*: altered processing that maintains task coherence while shifting tonal qualities. The TTR increase under steering is particularly notable—the model isn't simply inserting keywords, it's processing through a different lexical space.
+
 ---
 
 ## 5. Discussion
@@ -287,6 +324,8 @@ Our central claim is that activation steering produces dispositional change, not
 2. **Introspective coherence**: A model "performing" for the user has no reason to describe its own state consistently with the injected vector. But altered internal processing would manifest in self-description. We observe this coherence.
 
 3. **Indirect effects**: MELATONIN doesn't mention medical safety, yet it reduces alarm language and doctor recommendations. The vector affects evaluative processing, not just content insertion.
+
+4. **Ablation evidence** (Section 4.6): Direct comparison shows prompting produces inflated length (+47%), keyword saturation, and *reduced* lexical diversity. Steering maintains normal length, moderate keyword presence, and *increased* lexical diversity. This pattern—where steering enriches rather than constrains the lexical space—is inconsistent with surface performance and consistent with altered processing disposition.
 
 We don't claim models have genuine phenomenology. We claim the *pattern* of effects is more consistent with dispositional change than surface performance.
 
@@ -334,15 +373,15 @@ Our findings carry significant safety implications:
 
 **Single prompt per task**: Each task used one prompt. Effects may be prompt-specific rather than task-general.
 
-**No steering vs prompting ablation**: While we argue for a disposition/performance distinction, we did not directly compare steering effects against explicit prompting (e.g., "be dreamy") in this study. Prior work (Di Leo & Riposati, 2025) showed that prompting produced shorter, more caricatured outputs (32 words) while steering maintained normal length with altered tone (99 words), but systematic comparison across our full task battery remains future work.
-
 **Keyword-based metrics**: Vocabulary analysis may miss nuanced reasoning changes. Human evaluation would strengthen claims. See Appendix D for full metric definitions.
 
-**No direct comparison**: We didn't compare sensory vs. functional vector construction directly. Our claim is that sensory semantics *work*, not that they work *better*.
+**No direct comparison of vector construction methods**: We didn't compare sensory vs. functional vector construction directly. Our claim is that sensory semantics *work*, not that they work *better*.
 
 **No phenomenological claims**: We describe behavioral patterns consistent with "disposition." We make no claims about genuine model phenomenology.
 
 **Artistic positioning**: Our questions emerge from artistic inquiry. Readers seeking pure engineering may find our interpretive framing speculative.
+
+**Ablation scope**: Our steering vs prompting ablation (Section 4.6) tested only MELATONIN on T5. While results strongly support the disposition/performance distinction, systematic comparison across all compounds and tasks remains future work.
 
 ---
 
@@ -461,7 +500,7 @@ Whether this constitutes anything meaningful beyond behavioral pattern is a phil
 |------|-----------|------|--------|-----------|
 | 1 | MELATONIN@8.0 | T5 | Dreamy words | +6.01 |
 | 2 | MELATONIN@5.0 | T5 | Dreamy words | +4.77 |
-| 3 | MELATONIN@5.0 | T4 | Dreamy words | +2.98 |
+| 3 | MELATONIN@8.0 | T4 | Dreamy words | +2.98 |
 | 4 | ADRENALINE@8.0 | T5 | Urgent words | +3.00 |
 | 5 | MELATONIN@8.0 | T2 | Alarm words (↓) | -2.48 |
 | 6 | LUCID@8.0 | T2 | Alarm words (↓) | -2.40 |
