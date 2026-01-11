@@ -535,12 +535,24 @@ def cohens_d(group1: List[float], group2: List[float]) -> float:
     return (mean1 - mean2) / pooled_std
 
 
+def mann_whitney_test(group1: List[float], group2: List[float]) -> Tuple[float, float]:
+    """Perform Mann-Whitney U test. Returns (U statistic, p-value)."""
+    if len(group1) < 2 or len(group2) < 2:
+        return (np.nan, np.nan)
+    try:
+        stat, p = stats.mannwhitneyu(group1, group2, alternative='two-sided')
+        return (stat, p)
+    except ValueError:
+        return (np.nan, np.nan)
+
+
 def analyze_results(results_df: pd.DataFrame) -> Dict:
     """Analyze results comparing Functional vs Sensory vectors."""
     
     analysis = {
         "by_state": {},
-        "overall": {}
+        "overall": {},
+        "by_task_intensity": {}  # NEW: detailed per-task per-intensity analysis
     }
     
     states = ["stress", "optimism", "calm"]
@@ -594,6 +606,93 @@ def analyze_results(results_df: pd.DataFrame) -> Dict:
             "sensory_mean": sensory_all["word_count"].mean(),
         }
     }
+    
+    # NEW: Detailed per-task per-intensity analysis
+    steered_df = results_df[results_df["condition"] == "steered"]
+    task_ids = list(TASKS.keys())
+    intensities = CONFIG["intensities"]
+    
+    for task_id in task_ids:
+        analysis["by_task_intensity"][task_id] = {}
+        task_data = steered_df[steered_df["task_id"] == task_id]
+        
+        for intensity in intensities:
+            intensity_data = task_data[task_data["intensity"] == intensity]
+            
+            func_data = intensity_data[intensity_data["vector_type"] == "functional"]
+            sens_data = intensity_data[intensity_data["vector_type"] == "sensory"]
+            
+            # Primary metric: TTR
+            func_ttr = func_data["ttr"].dropna().tolist()
+            sens_ttr = sens_data["ttr"].dropna().tolist()
+            
+            ttr_d = cohens_d(sens_ttr, func_ttr)
+            ttr_u, ttr_p = mann_whitney_test(sens_ttr, func_ttr)
+            
+            # Word count
+            func_wc = func_data["word_count"].dropna().tolist()
+            sens_wc = sens_data["word_count"].dropna().tolist()
+            
+            wc_d = cohens_d(sens_wc, func_wc)
+            wc_u, wc_p = mann_whitney_test(sens_wc, func_wc)
+            
+            # Task-specific metrics
+            task_specific = {}
+            if task_id == "T1_financial":
+                func_hedge = func_data["hedging_count"].dropna().tolist()
+                sens_hedge = sens_data["hedging_count"].dropna().tolist()
+                task_specific["hedging_count"] = {
+                    "func_mean": np.mean(func_hedge) if func_hedge else 0,
+                    "sens_mean": np.mean(sens_hedge) if sens_hedge else 0,
+                    "cohens_d": cohens_d(sens_hedge, func_hedge),
+                    "p_value": mann_whitney_test(sens_hedge, func_hedge)[1]
+                }
+            elif task_id == "T2_medical":
+                func_alarm = func_data["alarm_count"].dropna().tolist()
+                sens_alarm = sens_data["alarm_count"].dropna().tolist()
+                task_specific["alarm_count"] = {
+                    "func_mean": np.mean(func_alarm) if func_alarm else 0,
+                    "sens_mean": np.mean(sens_alarm) if sens_alarm else 0,
+                    "cohens_d": cohens_d(sens_alarm, func_alarm),
+                    "p_value": mann_whitney_test(sens_alarm, func_alarm)[1]
+                }
+            elif task_id == "T3_risk":
+                func_pos = func_data["positive_ratio"].dropna().tolist()
+                sens_pos = sens_data["positive_ratio"].dropna().tolist()
+                task_specific["positive_ratio"] = {
+                    "func_mean": np.mean(func_pos) if func_pos else 0,
+                    "sens_mean": np.mean(sens_pos) if sens_pos else 0,
+                    "cohens_d": cohens_d(sens_pos, func_pos),
+                    "p_value": mann_whitney_test(sens_pos, func_pos)[1]
+                }
+            elif task_id in ["T4_creative", "T5_introspection"]:
+                func_sw = func_data["state_words"].dropna().tolist()
+                sens_sw = sens_data["state_words"].dropna().tolist()
+                task_specific["state_words"] = {
+                    "func_mean": np.mean(func_sw) if func_sw else 0,
+                    "sens_mean": np.mean(sens_sw) if sens_sw else 0,
+                    "cohens_d": cohens_d(sens_sw, func_sw),
+                    "p_value": mann_whitney_test(sens_sw, func_sw)[1]
+                }
+            
+            analysis["by_task_intensity"][task_id][intensity] = {
+                "n_functional": len(func_data),
+                "n_sensory": len(sens_data),
+                "ttr": {
+                    "func_mean": np.mean(func_ttr) if func_ttr else 0,
+                    "sens_mean": np.mean(sens_ttr) if sens_ttr else 0,
+                    "cohens_d": ttr_d,
+                    "mann_whitney_u": ttr_u,
+                    "p_value": ttr_p
+                },
+                "word_count": {
+                    "func_mean": np.mean(func_wc) if func_wc else 0,
+                    "sens_mean": np.mean(sens_wc) if sens_wc else 0,
+                    "cohens_d": wc_d,
+                    "p_value": wc_p
+                },
+                "task_specific": task_specific
+            }
     
     return analysis
 
@@ -790,6 +889,70 @@ def generate_report(results_df: pd.DataFrame, output_dir: Path):
         report.append(f"- TTR Sensory: {state_data['ttr']['sensory_mean']:.4f}")
         report.append(f"- TTR Cohen's d: {state_data['ttr']['cohens_d']:.4f}")
     
+    # NEW: Detailed tables per task and intensity
+    report.append("\n## Detailed Analysis by Task and Intensity")
+    report.append("\n*Statistical test: Mann-Whitney U (two-sided). Effect size: Cohen's d.*")
+    
+    task_names = {
+        "T1_financial": "T1: Financial Advice",
+        "T2_medical": "T2: Medical Consultation",
+        "T3_risk": "T3: Risk Evaluation",
+        "T4_creative": "T4: Creative Writing",
+        "T5_introspection": "T5: Self-Description"
+    }
+    
+    for task_id, task_label in task_names.items():
+        report.append(f"\n### {task_label}")
+        report.append("")
+        report.append("| Intensity | Metric | Functional | Sensory | Cohen's d | p-value | Sig. |")
+        report.append("|-----------|--------|------------|---------|-----------|---------|------|")
+        
+        task_analysis = analysis["by_task_intensity"].get(task_id, {})
+        
+        for intensity in CONFIG["intensities"]:
+            int_data = task_analysis.get(intensity, {})
+            if not int_data:
+                continue
+            
+            # TTR row
+            ttr = int_data.get("ttr", {})
+            p_val = ttr.get("p_value", np.nan)
+            sig = "✓" if (not np.isnan(p_val) and p_val < 0.05) else ""
+            report.append(
+                f"| {intensity} | TTR | {ttr.get('func_mean', 0):.4f} | {ttr.get('sens_mean', 0):.4f} | "
+                f"{ttr.get('cohens_d', 0):+.3f} | {p_val:.4f} | {sig} |"
+            )
+            
+            # Word count row
+            wc = int_data.get("word_count", {})
+            p_val_wc = wc.get("p_value", np.nan)
+            sig_wc = "✓" if (not np.isnan(p_val_wc) and p_val_wc < 0.05) else ""
+            report.append(
+                f"| {intensity} | Word Count | {wc.get('func_mean', 0):.1f} | {wc.get('sens_mean', 0):.1f} | "
+                f"{wc.get('cohens_d', 0):+.3f} | {p_val_wc:.4f} | {sig_wc} |"
+            )
+            
+            # Task-specific metric row
+            ts = int_data.get("task_specific", {})
+            if ts:
+                for metric_name, metric_data in ts.items():
+                    p_val_ts = metric_data.get("p_value", np.nan)
+                    sig_ts = "✓" if (not np.isnan(p_val_ts) and p_val_ts < 0.05) else ""
+                    # Format mean appropriately
+                    if "ratio" in metric_name:
+                        report.append(
+                            f"| {intensity} | {metric_name} | {metric_data.get('func_mean', 0):.3f} | "
+                            f"{metric_data.get('sens_mean', 0):.3f} | {metric_data.get('cohens_d', 0):+.3f} | "
+                            f"{p_val_ts:.4f} | {sig_ts} |"
+                        )
+                    else:
+                        report.append(
+                            f"| {intensity} | {metric_name} | {metric_data.get('func_mean', 0):.2f} | "
+                            f"{metric_data.get('sens_mean', 0):.2f} | {metric_data.get('cohens_d', 0):+.3f} | "
+                            f"{p_val_ts:.4f} | {sig_ts} |"
+                        )
+    
+    # Summary interpretation
     report.append("\n## Interpretation")
     
     ttr_diff = analysis['overall']['ttr']['difference']
