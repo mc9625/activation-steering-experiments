@@ -840,11 +840,32 @@ def main():
     print(f"Device: {CONFIG['device']}")
     
     tokenizer = AutoTokenizer.from_pretrained(CONFIG["model_name"])
-    model = AutoModelForCausalLM.from_pretrained(
-        CONFIG["model_name"],
-        torch_dtype=torch.float16 if CONFIG["device"] != "cpu" else torch.float32,
-        device_map=CONFIG["device"]
-    )
+    
+    # Avoid padding warnings during generate
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    
+    device = CONFIG["device"]
+    
+    # Robust loading across cuda / mps / cpu
+    if device == "cuda":
+        model = AutoModelForCausalLM.from_pretrained(
+            CONFIG["model_name"],
+            torch_dtype=torch.float16,
+            device_map="auto"
+        )
+    elif device == "mps":
+        # On MPS, device_map often causes issues
+        model = AutoModelForCausalLM.from_pretrained(
+            CONFIG["model_name"],
+            torch_dtype=torch.float16
+        ).to("mps")
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            CONFIG["model_name"],
+            torch_dtype=torch.float32
+        ).to("cpu")
+    
     model.eval()
     
     print("✓ Model loaded")

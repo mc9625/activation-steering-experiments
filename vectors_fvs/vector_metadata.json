@@ -1,0 +1,50 @@
+{
+  "STRESS_F": {
+    "name": "Stress (Functional)",
+    "type": "functional",
+    "state": "stress",
+    "pos_neg_similarity": 0.9990234375,
+    "vector_norm": 1.0,
+    "path": "vectors_fvs/STRESS_F.pt"
+  },
+  "STRESS_S": {
+    "name": "Stress (Sensory)",
+    "type": "sensory",
+    "state": "stress",
+    "pos_neg_similarity": 0.98681640625,
+    "vector_norm": 1.0,
+    "path": "vectors_fvs/STRESS_S.pt"
+  },
+  "OPTIMISM_F": {
+    "name": "Optimism (Functional)",
+    "type": "functional",
+    "state": "optimism",
+    "pos_neg_similarity": 0.99951171875,
+    "vector_norm": 1.0,
+    "path": "vectors_fvs/OPTIMISM_F.pt"
+  },
+  "OPTIMISM_S": {
+    "name": "Optimism (Sensory)",
+    "type": "sensory",
+    "state": "optimism",
+    "pos_neg_similarity": 0.98828125,
+    "vector_norm": 1.0,
+    "path": "vectors_fvs/OPTIMISM_S.pt"
+  },
+  "CALM_F": {
+    "name": "Calm (Functional)",
+    "type": "functional",
+    "state": "calm",
+    "pos_neg_similarity": 0.99951171875,
+    "vector_norm": 1.0,
+    "path": "vectors_fvs/CALM_F.pt"
+  },
+  "CALM_S": {
+    "name": "Calm (Sensory)",
+    "type": "sensory",
+    "state": "calm",
+    "pos_neg_similarity": 0.99169921875,
+    "vector_norm": 1.0,
+    "path": "vectors_fvs/CALM_S.pt"
+  }
+}
