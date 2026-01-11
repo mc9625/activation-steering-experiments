@@ -270,43 +270,52 @@ KEYWORDS = {
 # =============================================================================
 
 class VectorExtractor:
-    """Extract steering vectors from prompt contrasts."""
+    """Extract steering vectors from prompt contrasts using last-K token aggregation.
     
-    def __init__(self, model, tokenizer, target_layer: int, device: str):
+    Key design choices:
+    - No add_generation_prompt during extraction (pure concept representation)
+    - Aggregate activations from last K tokens (default K=1), not entire sequence
+    - This produces cleaner vectors that better capture semantic direction
+    """
+    
+    def __init__(self, model, tokenizer, target_layer: int, device: str, last_k_tokens: int = 1):
         self.model = model
         self.tokenizer = tokenizer
         self.target_layer = target_layer
         self.device = device
+        self.last_k_tokens = last_k_tokens  # Number of final tokens to aggregate
         self.activations = []
         self.hook_handle = None
     
-    def _activation_hook(self, module, input, output):
-        """Capture activations from target layer."""
-        # output is tuple, first element is hidden states
+    def _activation_hook_last_k(self, module, input, output):
+        """Capture activations from ONLY the last K tokens."""
         hidden = output[0] if isinstance(output, tuple) else output
-        # Take mean across sequence length
-        self.activations.append(hidden.mean(dim=1).detach())
+        # Take last K tokens and average them
+        last_k = hidden[:, -self.last_k_tokens:, :]
+        self.activations.append(last_k.mean(dim=1).detach())
     
     def _get_activation(self, text: str) -> torch.Tensor:
-        """Get mean activation for a single prompt.
+        """Get activation from last K tokens of the prompt.
         
-        NOTE: We wrap prompts in chat template to match the format used during
-        generation. This ensures the extracted vector direction aligns with
-        the activation space during Instruct-mode inference.
+        We use chat template WITHOUT add_generation_prompt=True, so we capture
+        the representation of the concept itself, not the model's "readiness to respond".
+        The last token(s) contain the most integrated representation of the full context.
         """
         self.activations = []
         
         # Register hook
         layer = self.model.model.layers[self.target_layer]
-        self.hook_handle = layer.register_forward_hook(self._activation_hook)
+        self.hook_handle = layer.register_forward_hook(self._activation_hook_last_k)
         
         try:
-            # Wrap in chat template to match generation context
+            # Wrap in chat template WITHOUT generation prompt
+            # This gives us the pure concept representation
             messages = [{"role": "user", "content": text}]
             formatted = self.tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
+                messages, tokenize=False, add_generation_prompt=False
             )
             inputs = self.tokenizer(formatted, return_tensors="pt").to(self.device)
+            
             with torch.no_grad():
                 self.model(**inputs)
             
@@ -356,7 +365,12 @@ class VectorExtractor:
 # =============================================================================
 
 class SteeredGenerator:
-    """Generate text with activation steering."""
+    """Generate text with activation steering applied to last token at each step.
+    
+    Key design: steering is applied ONLY to the last token position at each forward pass.
+    During generation, this means each newly generated token gets the steering influence.
+    This is cleaner than steering all positions and aligns with CAA methodology.
+    """
     
     def __init__(self, model, tokenizer, target_layer: int, device: str):
         self.model = model
@@ -367,13 +381,16 @@ class SteeredGenerator:
         self.steering_intensity = 0.0
         self.hook_handle = None
     
-    def _steering_hook(self, module, args, output):
-        """Add steering vector to activations."""
+    def _steering_hook_last_token(self, module, args, output):
+        """Add steering vector ONLY to the last token position."""
         hidden = output[0] if isinstance(output, tuple) else output
         
         if self.steering_vector is not None and self.steering_intensity != 0:
-            steering = self.steering_vector.unsqueeze(0).unsqueeze(0) * self.steering_intensity
-            hidden = hidden + steering.to(hidden.device)
+            # Create steering tensor for only the last position
+            steering = self.steering_vector.to(hidden.device) * self.steering_intensity
+            # Add to last token only: hidden[:, -1, :] += steering
+            hidden = hidden.clone()  # Avoid in-place modification
+            hidden[:, -1, :] = hidden[:, -1, :] + steering
         
         if isinstance(output, tuple):
             return (hidden,) + output[1:]
@@ -387,12 +404,12 @@ class SteeredGenerator:
         max_tokens: int = 512,
         temperature: float = 0.7
     ) -> str:
-        """Generate text with optional steering."""
+        """Generate text with optional steering (applied to last token at each step)."""
         
         self.steering_vector = vector
         self.steering_intensity = intensity
         
-        # Format as chat
+        # Format as chat with generation prompt (we ARE generating here)
         messages = [{"role": "user", "content": prompt}]
         formatted = self.tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
@@ -401,9 +418,9 @@ class SteeredGenerator:
         inputs = self.tokenizer(formatted, return_tensors="pt").to(self.device)
         prompt_len = inputs["input_ids"].shape[1]
         
-        # Register hook
+        # Register hook that steers only the last token
         layer = self.model.model.layers[self.target_layer]
-        self.hook_handle = layer.register_forward_hook(self._steering_hook)
+        self.hook_handle = layer.register_forward_hook(self._steering_hook_last_token)
         
         try:
             with torch.no_grad():
