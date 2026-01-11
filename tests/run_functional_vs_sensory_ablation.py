@@ -288,7 +288,12 @@ class VectorExtractor:
         self.activations.append(hidden.mean(dim=1).detach())
     
     def _get_activation(self, text: str) -> torch.Tensor:
-        """Get mean activation for a single prompt."""
+        """Get mean activation for a single prompt.
+        
+        NOTE: We wrap prompts in chat template to match the format used during
+        generation. This ensures the extracted vector direction aligns with
+        the activation space during Instruct-mode inference.
+        """
         self.activations = []
         
         # Register hook
@@ -296,7 +301,12 @@ class VectorExtractor:
         self.hook_handle = layer.register_forward_hook(self._activation_hook)
         
         try:
-            inputs = self.tokenizer(text, return_tensors="pt").to(self.device)
+            # Wrap in chat template to match generation context
+            messages = [{"role": "user", "content": text}]
+            formatted = self.tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+            inputs = self.tokenizer(formatted, return_tensors="pt").to(self.device)
             with torch.no_grad():
                 self.model(**inputs)
             
@@ -389,6 +399,7 @@ class SteeredGenerator:
         )
         
         inputs = self.tokenizer(formatted, return_tensors="pt").to(self.device)
+        prompt_len = inputs["input_ids"].shape[1]
         
         # Register hook
         layer = self.model.model.layers[self.target_layer]
@@ -404,11 +415,9 @@ class SteeredGenerator:
                     pad_token_id=self.tokenizer.eos_token_id
                 )
             
-            response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
-            # Extract assistant response
-            if "assistant" in response.lower():
-                response = response.split("assistant")[-1].strip()
+            # Decode ONLY the generated tokens (not the prompt)
+            generated_tokens = outputs[0][prompt_len:]
+            response = self.tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
             
             return response
             
@@ -542,6 +551,14 @@ def analyze_results(results_df: pd.DataFrame) -> Dict:
         functional = state_data[state_data["vector_type"] == "functional"]
         sensory = state_data[state_data["vector_type"] == "sensory"]
         
+        # Filter only T4/T5 for state_words analysis (other tasks don't compute this metric)
+        functional_t4t5 = functional[functional["task_id"].isin(["T4_creative", "T5_introspection"])]
+        sensory_t4t5 = sensory[sensory["task_id"].isin(["T4_creative", "T5_introspection"])]
+        
+        # Compute state_words means only from valid rows (T4/T5)
+        func_state_words = functional_t4t5["state_words"].dropna()
+        sens_state_words = sensory_t4t5["state_words"].dropna()
+        
         analysis["by_state"][state] = {
             "ttr": {
                 "functional_mean": functional["ttr"].mean(),
@@ -549,8 +566,11 @@ def analyze_results(results_df: pd.DataFrame) -> Dict:
                 "cohens_d": cohens_d(sensory["ttr"].tolist(), functional["ttr"].tolist())
             },
             "state_words": {
-                "functional_mean": functional["state_words"].mean() if "state_words" in functional else 0,
-                "sensory_mean": sensory["state_words"].mean() if "state_words" in sensory else 0,
+                "functional_mean": func_state_words.mean() if len(func_state_words) > 0 else 0.0,
+                "sensory_mean": sens_state_words.mean() if len(sens_state_words) > 0 else 0.0,
+                "cohens_d": cohens_d(sens_state_words.tolist(), func_state_words.tolist()) if len(func_state_words) > 0 and len(sens_state_words) > 0 else 0.0,
+                "n_functional": len(func_state_words),
+                "n_sensory": len(sens_state_words)
             },
             "word_count": {
                 "functional_mean": functional["word_count"].mean(),
@@ -848,22 +868,36 @@ def main():
     device = CONFIG["device"]
     
     # Robust loading across cuda / mps / cpu
+    # Use dtype= (newer) with fallback to torch_dtype= for older transformers versions
+    def load_model_with_dtype(model_name, dtype, **kwargs):
+        """Load model with dtype, falling back to torch_dtype for compatibility."""
+        try:
+            # Try newer 'dtype' parameter first
+            return AutoModelForCausalLM.from_pretrained(
+                model_name, dtype=dtype, **kwargs
+            )
+        except TypeError:
+            # Fall back to deprecated 'torch_dtype' for older transformers
+            return AutoModelForCausalLM.from_pretrained(
+                model_name, torch_dtype=dtype, **kwargs
+            )
+    
     if device == "cuda":
-        model = AutoModelForCausalLM.from_pretrained(
+        model = load_model_with_dtype(
             CONFIG["model_name"],
-            torch_dtype=torch.float16,
+            torch.float16,
             device_map="auto"
         )
     elif device == "mps":
         # On MPS, device_map often causes issues
-        model = AutoModelForCausalLM.from_pretrained(
+        model = load_model_with_dtype(
             CONFIG["model_name"],
-            torch_dtype=torch.float16
+            torch.float16
         ).to("mps")
     else:
-        model = AutoModelForCausalLM.from_pretrained(
+        model = load_model_with_dtype(
             CONFIG["model_name"],
-            torch_dtype=torch.float32
+            torch.float32
         ).to("cpu")
     
     model.eval()
