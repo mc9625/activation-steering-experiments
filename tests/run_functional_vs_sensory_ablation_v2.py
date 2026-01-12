@@ -84,7 +84,14 @@ def pick_device() -> str:
 
 
 DEVICE = pick_device()
-DTYPE = torch.float16 if DEVICE == "cuda" else torch.float32
+
+# dtype selection: float16 for GPU/MPS, float32 for CPU
+if DEVICE == "mps":
+    DTYPE = torch.float16
+elif DEVICE == "cuda":
+    DTYPE = torch.float16
+else:
+    DTYPE = torch.float32
 
 RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
 OUTPUT_DIR = CONFIG["output_root"] / f"run_{RUN_ID}"
@@ -884,10 +891,20 @@ def load_model_and_tokenizer() -> Tuple:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(
-        CONFIG["model_name"],
-        torch_dtype=DTYPE,
-    )
+    # Try dtype= (newer transformers), fallback to torch_dtype= (older versions)
+    try:
+        model = AutoModelForCausalLM.from_pretrained(
+            CONFIG["model_name"],
+            dtype=DTYPE,
+            low_cpu_mem_usage=True,
+        )
+    except TypeError:
+        model = AutoModelForCausalLM.from_pretrained(
+            CONFIG["model_name"],
+            torch_dtype=DTYPE,
+            low_cpu_mem_usage=True,
+        )
+    
     model.to(DEVICE)
     model.eval()
 
