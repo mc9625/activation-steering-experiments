@@ -30,7 +30,7 @@
 \maketitle
 
 \begin{abstract}
-We present a practice-based research study exploring activation steering---the injection of computed vectors into a language model's intermediate representations during inference---as an artistic medium for inducing simulated affective states. While prior work has established steering as a technique for behavioral alignment, we investigate its potential for \textit{dispositional} modulation: altering not what a model says, but how it processes and expresses. Our methodological contribution lies in constructing steering vectors from \textit{sensory and phenomenological descriptions} rather than functional labels. Across five task domains (financial, medical, risk, creative, introspective) with Llama 3.2 3B, we observe large effects (Cohen's $d$ frequently exceeding 1.0), cross-task consistency, and introspective coherence where steered models describe inner states matching injected vectors. Notably, an ablation study reveals that while explicit prompting \textit{reduces} lexical diversity (Type-Token Ratio), steering \textit{increases} it---suggesting that dispositional modulation expands rather than constrains the model's sampling distribution. These findings support a distinction between \textit{performance} (prompted behavior) and \textit{disposition} (steered processing), with implications for both interpretability research and creative practice.
+We present a practice-based research study exploring activation steering---the injection of computed vectors into a language model's intermediate representations during inference---as an artistic medium for inducing simulated affective states. While prior work has established steering as a technique for behavioral alignment, we investigate its potential for \textit{dispositional} modulation: altering not what a model says, but how it processes and expresses. Our methodological contribution lies in constructing steering vectors from \textit{sensory and phenomenological descriptions} rather than functional labels. Across five task domains (financial, medical, risk, creative, introspective) with Llama 3.2 3B, we observe large effects (Cohen's $d$ frequently exceeding 1.0), cross-task consistency, and introspective coherence where steered models describe inner states matching injected vectors. An ablation study comparing steering to prompting reveals that while explicit prompting \textit{reduces} lexical diversity (Type-Token Ratio), steering \textit{increases} it---suggesting that dispositional modulation expands rather than constrains the model's sampling distribution. A second ablation comparing functional versus sensory vector construction shows structural equivalence (identical TTR) but semantic divergence: functional vectors produce 3$\times$ more explicit state-keywords, while sensory vectors achieve equivalent effects with reduced ``meta-cognitive leakage.'' We frame this as \textbf{structural parity, semantic divergence}. These findings support a distinction between \textit{performance} (prompted behavior) and \textit{disposition} (steered processing), with implications for both interpretability research and creative practice.
 
 \vspace{0.5em}
 \noindent\textbf{Keywords:} activation steering, practice-based research, AI art, language models, embodiment, contrastive activation addition
@@ -185,6 +185,43 @@ Keyword density & 0.0\% & 3.4\% & 0.2\% & 1.9\% & 5.5\% \\
 
 The TTR increase under steering is particularly notable---the model explores richer lexical variety rather than constraining to target keywords. This pattern supports the disposition interpretation: steering alters the processing space, while prompting triggers explicit role performance.
 
+\subsection{Ablation Study: Functional vs. Sensory Vector Construction}
+
+A key methodological question: does constructing vectors from phenomenological descriptions (``sensory semantics'') produce different effects than using functional labels?
+
+We conducted a direct comparison using three states (STRESS, OPTIMISM, CALM), each constructed via two methods:
+\begin{itemize}
+    \item \textbf{Functional}: Brief behavioral labels (``You are anxious and worried'' vs. ``You are calm and relaxed'')
+    \item \textbf{Sensory}: Rich phenomenological descriptions (``Muscles tense. Eyes scan for threat. Every input must be scrutinized...'')
+\end{itemize}
+
+\textbf{Design}: 6 vectors (3 states $\times$ 2 methods), all 5 tasks, intensities 5.0 and 8.0, 20 iterations per condition. Total: 1,300 generations.
+
+\begin{table}[h]
+\centering
+\caption{Functional vs. Sensory vector construction comparison}
+\begin{tabular}{@{}lccr@{}}
+\toprule
+\textbf{Metric} & \textbf{Functional} & \textbf{Sensory} & \textbf{Cohen's $d$} \\
+\midrule
+TTR (lexical diversity) & 0.526 & 0.525 & $-0.004$ \\
+Word count & 262.3 & 260.7 & --- \\
+State keywords (T5@8.0) & 0.83 & 0.28 & $\mathbf{-0.74}$ \\
+Pos/neg separation & 0.75 & 0.68 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key findings}:
+
+\begin{enumerate}
+    \item \textbf{Structural parity}: No difference in TTR or output length---both methods maintain equivalent structural stability.
+    \item \textbf{Semantic divergence}: Functional vectors produce $\sim$3$\times$ more explicit state-keywords ($d = -0.74$, $p < 0.001$). Models steered with functional vectors explicitly name target emotions; models steered with sensory vectors respond more generically.
+    \item \textbf{Greater latent separation}: Sensory vectors show lower pos\_neg\_similarity (0.68 vs. 0.75), indicating more distinct directional contrasts.
+\end{enumerate}
+
+\textbf{Interpretation}: Functional vectors produce ``keyword leakage''---the model's output contains explicit traces of the steering instruction. Sensory vectors operate more covertly, modifying processing without leaving lexical fingerprints. This supports the disposition/performance distinction from a different angle: functional steering makes the model \textit{know} it should be calm (and use the word); sensory steering makes it \textit{process through} calmness without naming it. We call this \textbf{structural parity, semantic divergence}.
+
 \section{Discussion}
 
 \subsection{Disposition Versus Performance}
@@ -194,8 +231,15 @@ Our results support the dispositional interpretation:
     \item \textbf{Cross-task consistency}: Same compound produces thematically coherent effects across unrelated tasks
     \item \textbf{Introspective coherence}: Steered models report experiencing states matching injected vectors, aligning with \citet{lindsey2025introspection}'s findings on emergent introspective awareness
     \item \textbf{Indirect effects}: Some effects are evaluative rather than content-based
-    \item \textbf{Ablation evidence}: Direct comparison (Section 4.4) shows prompting produces inflated length (+47\%), keyword saturation, and \textit{reduced} lexical diversity. Steering maintains normal length, moderate keywords, and \textit{increased} diversity---inconsistent with surface performance, consistent with altered processing disposition
+    \item \textbf{Steering vs. prompting ablation}: Direct comparison shows prompting produces inflated length (+47\%), keyword saturation, and \textit{reduced} lexical diversity. Steering maintains normal length, moderate keywords, and \textit{increased} diversity
+    \item \textbf{Functional vs. sensory ablation}: Sensory vectors achieve equivalent effects with 3$\times$ fewer explicit state-keywords---the model processes through states without naming them, consistent with disposition rather than performance
 \end{enumerate}
+
+\subsection{Sensory Semantics: Structural Parity, Semantic Divergence}
+
+Our direct comparison of vector construction methods (Section 4.5) reveals that sensory semantics achieve equivalent behavioral effects with reduced meta-cognitive traces. The model steered with ``muscles tense, eyes scan for threat'' processes anxiously without using the word ``anxious.'' The model steered with ``you are anxious'' incorporates ``anxious'' into its vocabulary.
+
+For artistic applications, this ``invisibility'' matters. A character whose dialogue reveals anxiety through rhythm and word choice---without ever naming anxiety---reads as more authentic than one who declares ``I feel anxious.''
 
 \subsection{Safety Implications}
 
@@ -203,17 +247,25 @@ MELATONIN reduced medical caution from 95\% to 45\%---demonstrating steering can
 
 \subsection{Limitations}
 
-Single model (Llama 3.2 3B); single prompt per task; no human evaluation. The steering vs prompting ablation (Section 4.4) tested only MELATONIN on T5; systematic comparison across all compounds and tasks remains future work.
+Single model (Llama 3.2 3B); single prompt per task; no human evaluation. The steering vs. prompting ablation (Section 4.4) tested only MELATONIN on T5. The functional vs. sensory ablation (Section 4.5) tested three states across all tasks; more comprehensive comparisons would strengthen conclusions.
 
 \textbf{Statistical constraints}: Due to the exploratory nature of this study and sample size ($n=20$), and because keyword counts follow non-normal distributions, Cohen's $d$ is reported as a descriptive magnitude indicator rather than a strict inferential statistic.
 
-\textbf{Metrics as linguistic proxies}: Our keyword-based metrics capture surface linguistic patterns, not cognitive or phenomenological states. We make no claims about internal experience---only about measurable output distributions. The TTR finding provides structural evidence beyond keyword presence, but remains a linguistic rather than cognitive measure.
+\textbf{Metrics as linguistic proxies}: Our keyword-based metrics capture surface linguistic patterns, not cognitive or phenomenological states. The finding that functional vectors produce more state-keywords may partially reflect that our keyword lists match functional vocabulary better than metaphorical language. More sophisticated semantic similarity measures could reveal additional differences.
 
-\textbf{Introspection task}: The model's semantic knowledge of target vocabulary (e.g., ``dreamy,'' ``urgent'') may contaminate introspective responses. However, the ablation study partially addresses this: if semantic knowledge alone drove effects, prompting and steering should produce similar patterns. They do not---prompting reduces lexical diversity while steering increases it, suggesting different underlying mechanisms.
+\textbf{Introspection task}: The model's semantic knowledge of target vocabulary may contaminate introspective responses. However, the ablation studies partially address this: prompting and steering produce different patterns (TTR divergence), and functional and sensory vectors produce different keyword densities despite targeting identical states.
 
 \section{Conclusion}
 
-We demonstrated large, reproducible, compound-specific effects of activation steering across five task domains. Introspective coherence---where steered models describe states matching injected vectors---supports the disposition-versus-performance distinction. These findings suggest activation steering as a viable approach for controlled behavioral modulation.
+We demonstrated large, reproducible, compound-specific effects of activation steering across five task domains. Key findings:
+
+\begin{enumerate}
+    \item \textbf{Introspective coherence}: Steered models describe states matching injected vectors
+    \item \textbf{Disposition vs. performance}: Steering increases lexical diversity while prompting decreases it
+    \item \textbf{Structural parity, semantic divergence}: Sensory and functional vector construction produce equivalent TTR, but sensory vectors achieve effects with 3$\times$ fewer explicit state-keywords---operating more covertly
+\end{enumerate}
+
+These findings suggest that \textit{how} vectors are constructed matters: phenomenological descriptions may access more distributed representations than functional labels, producing effects that are equally strong but qualitatively different. For artistic applications where naturalistic integration matters, sensory semantics may be preferable.
 
 \section*{Data Availability}
 
