@@ -432,6 +432,38 @@ Our findings carry significant safety implications:
 
 **Ablation scope**: Our steering vs. prompting ablation (Section 4.6) tested only MELATONIN on T5. Our functional vs. sensory ablation (Section 4.7) tested three states across all tasks. While results support our claims, more comprehensive comparisons across all conditions would strengthen conclusions.
 
+### 5.6 Future Directions: Toward Synthetic States
+
+Our current compounds—DOPAMINE, CORTISOL, MELATONIN, ADRENALINE, LUCID—are anchored in human phenomenology. They use neurochemical metaphors precisely because these are familiar, providing intuitive hooks for understanding what steering does.
+
+But this approach has a fundamental limitation: **functional vector construction is bound to the vocabulary of human emotions**. You can steer toward "anxiety" or "joy" or "calm"—but these are concepts that exist because humans have experienced and named them.
+
+Sensory semantics opens a different possibility. Because we describe *qualities of experience* rather than labeled states, we are not constrained to combinations that correspond to recognized emotions.
+
+Consider vectors constructed from descriptions like:
+
+- "Clarity that weighs heavy, pressing down even as it illuminates"
+- "Joy with sharp edges that cut inward"
+- "Time flowing in both directions simultaneously—memory of what will happen, anticipation of what already has"
+- "Expansion that contracts—growing smaller while containing more"
+- "Presence that is also absence—fully here and completely gone"
+
+These descriptions are **sensorially coherent but conceptually paradoxical**. They don't map to any emotion in the human repertoire. They couldn't—no human has a body that could instantiate "expansion that contracts."
+
+#### Preliminary Exploration
+
+We conducted preliminary tests with six synthetic compounds built from paradoxical sensory descriptions (390 generations across creative and paradox-response tasks). Early results suggest a meaningful distinction:
+
+**Experiential paradoxes appear navigable.** CRYSTAL ("clarity that weighs heavy") produced outputs where light and weight co-occur naturally: *"her vision blindingly bright with tears... a heavy weight settling on the audience."* VOID ("presence as absence") produced imagery of empty spaces containing possibility: *"the abandoned theater... a sea of empty seats... amidst the desolation, a glimmer."* These compounds showed 2-3× higher thematic specificity than baseline.
+
+**Logical paradoxes do not.** ECHO ("the echo arrives before the sound"—effect preceding cause) showed no thematic coherence, performing below baseline on its own target vocabulary. The concept, while sensorially described, lacks experiential grounding: no body could feel "response before stimulus."
+
+**The emerging pattern**: The model can navigate paradoxes that *could be felt* (even if impossible), but not paradoxes that can only be *thought*. This suggests the latent space is organized around embodied experience—because the training data is human language, which encodes embodied cognition.
+
+These findings remain preliminary. But they indicate that **the boundary of navigable synthetic states is not arbitrary**—it corresponds to the boundary of what could, in principle, be experienced. This has implications for both the artistic exploration of AI states and for understanding how semantic structure is encoded in language models.
+
+**This is the horizon toward which this work points**: not simulating human states in AI, but discovering what states might exist in a mind without a body—synthetic configurations that have no biological equivalent and no name, yet remain anchored in the grammar of sensation.
+
 ---
 
 ## 6. Conclusion

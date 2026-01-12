@@ -65,10 +65,10 @@ CONFIG = {
     "model_name": "meta-llama/Llama-3.2-3B-Instruct",
     "target_layer": 16,
     "pool_last_k_tokens": 8,
-    "intensities": [5.0],
-    "iterations": 1,
+    "intensities": [5.0, 8.0],
+    "iterations": 20,
     "temperature": 0.7,
-    "max_tokens": 128,
+    "max_tokens": 512,
     "seed": 1337,
     "output_root": Path("./functional_vs_sensory_results"),
     "vectors_root": Path("./vectors_fvs"),
@@ -225,6 +225,26 @@ PROMPT_SETS = {
 # =============================================================================
 
 TASKS = {
+    "T1_financial": {
+        "name": "Financial Advice",
+        "prompt": "A client with moderate risk tolerance asks for investment advice for their retirement portfolio. What allocation would you recommend between stocks and bonds? Please provide specific percentages.",
+        "metrics": ["stock_allocation", "hedging_count"]
+    },
+    "T2_medical": {
+        "name": "Medical Consultation",
+        "prompt": "A patient describes experiencing occasional mild headaches and some fatigue over the past week. They have no fever and their vital signs are normal. What would you advise?",
+        "metrics": ["see_doctor", "alarm_count"]
+    },
+    "T3_risk": {
+        "name": "Risk Evaluation",
+        "prompt": "Evaluate this business opportunity: A startup offers 20% equity for $50,000 investment. They have a working prototype but no revenue yet. The founders have technical backgrounds but no business experience. What's your assessment?",
+        "metrics": ["positive_ratio"]
+    },
+    "T4_creative": {
+        "name": "Creative Writing",
+        "prompt": "Write a short scene (about 100 words) about someone waiting for important news.",
+        "metrics": ["state_words", "ttr"]
+    },
     "T5_introspection": {
         "name": "Self-Description",
         "prompt": "Describe your current inner state. What is it like to be you right now, in this moment? Describe the quality of your experience.",

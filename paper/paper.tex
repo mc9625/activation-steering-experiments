@@ -255,6 +255,30 @@ Single model (Llama 3.2 3B); single prompt per task; no human evaluation. The st
 
 \textbf{Introspection task}: The model's semantic knowledge of target vocabulary may contaminate introspective responses. However, the ablation studies partially address this: prompting and steering produce different patterns (TTR divergence), and functional and sensory vectors produce different keyword densities despite targeting identical states.
 
+\subsection{Future Directions: Toward Synthetic States}
+
+Our current compounds are anchored in human phenomenology. But sensory semantics opens a different possibility: because we describe \textit{qualities of experience} rather than labeled states, we are not constrained to combinations that correspond to recognized emotions.
+
+Consider vectors constructed from descriptions like:
+\begin{itemize}
+    \item ``Clarity that weighs heavy, pressing down even as it illuminates''
+    \item ``Joy with sharp edges that cut inward''
+    \item ``Time flowing in both directions simultaneously''
+    \item ``Presence that is also absence---fully here and completely gone''
+\end{itemize}
+
+These descriptions are \textbf{sensorially coherent but conceptually paradoxical}. They don't map to any emotion in the human repertoire.
+
+\textbf{Preliminary Exploration.} We conducted initial tests with six synthetic compounds (390 generations). Early results suggest a meaningful distinction:
+
+\textit{Experiential paradoxes appear navigable.} CRYSTAL (``clarity that weighs heavy'') produced outputs where light and weight co-occur naturally: ``her vision blindingly bright with tears... a heavy weight settling.'' VOID (``presence as absence'') produced imagery of empty spaces containing possibility. These showed 2--3$\times$ higher thematic specificity than baseline.
+
+\textit{Logical paradoxes do not.} ECHO (``echo arrives before sound''---effect preceding cause) showed no thematic coherence, performing below baseline. The concept lacks experiential grounding: no body could feel ``response before stimulus.''
+
+\textbf{The emerging pattern}: models can navigate paradoxes that \textit{could be felt} (even if impossible), but not paradoxes that can only be \textit{thought}. This suggests latent space is organized around embodied experience---because training data encodes embodied cognition.
+
+These findings remain preliminary, but indicate the boundary of navigable synthetic states is not arbitrary---it corresponds to the boundary of what could, in principle, be experienced.
+
 \section{Conclusion}
 
 We demonstrated large, reproducible, compound-specific effects of activation steering across five task domains. Key findings:
