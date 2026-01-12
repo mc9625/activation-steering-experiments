@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Ablation Study: Functional vs Sensory Vector Construction (v2)
-==============================================================
+Ablation Study: Functional vs Sensory Vector Construction (v2.1)
+================================================================
 
 Goal
 ----
@@ -12,33 +12,24 @@ vs
 
 produce systematically different effects.
 
-Key v2 patches (stability + methodological hygiene)
----------------------------------------------------
-1) MPS-safe loading (no device_map="mps"), and dtype handling:
-   - CUDA -> float16
-   - MPS/CPU -> float32 (more stable)
-2) Prompt formatting consistency:
-   - vector extraction uses the same chat template used at generation time
-3) Activation pooling:
-   - mean over LAST_K tokens (instead of full-sequence mean), reducing dilution
-4) Steering application:
-   - apply steering ONLY to the last token hidden state (autoregressive step)
-5) Response extraction:
-   - decode only newly generated tokens (no fragile "split('assistant')").
-6) Metrics / analysis robustness:
-   - consistent columns with NaN where not applicable
-   - fix incorrect checks like `"state_words" in functional` (was a bug)
+Key changes from v1:
+--------------------
+1) MPS-safe loading (no device_map="mps"), dtype: CUDA->float16, MPS/CPU->float32
+2) Prompt formatting consistency with chat template
+3) Activation pooling: mean over LAST_K tokens (reduces dilution)
+4) Steering: apply ONLY to last token hidden state
+5) Response extraction: decode only newly generated tokens
+6) Metrics with NaN defaults, JSON-safe serialization
+7) Run isolation with timestamps
+
+v2.1 fixes:
+-----------
+- MPS Generator stability (use torch.manual_seed instead)
+- clone() before in-place modification in steering hook
+- add_generation_prompt=False for vector extraction (capture concept, not generation setup)
 
 Usage:
-    python run_functional_vs_sensory_ablation_v2.py [--extract-only] [--test-only] [--analyze-only]
-
-Requirements:
-    - torch
-    - transformers
-    - pandas
-    - numpy
-    - scipy
-    - tqdm
+    python run_functional_vs_sensory_ablation_v2.1.py [--extract-only] [--test-only] [--analyze-only]
 
 Author: NuvolaProject
 Date: January 2026
@@ -46,7 +37,6 @@ Date: January 2026
 
 import argparse
 import json
-import os
 import random
 import re
 import sys
@@ -60,7 +50,6 @@ import torch
 from scipy import stats
 from tqdm import tqdm
 
-# Check for transformers
 try:
     from transformers import AutoModelForCausalLM, AutoTokenizer
 except ImportError:
@@ -69,21 +58,22 @@ except ImportError:
 
 
 # =============================================================================
-# CONFIGURATION (v2)
+# CONFIGURATION
 # =============================================================================
 
 CONFIG = {
     "model_name": "meta-llama/Llama-3.2-3B-Instruct",
     "target_layer": 16,
-    "pool_last_k_tokens": 8,          # PATCH v2: pool over last K tokens
+    "pool_last_k_tokens": 8,
     "intensities": [5.0, 8.0],
     "iterations": 20,
     "temperature": 0.7,
     "max_tokens": 512,
-    "seed": 1337,                     # PATCH v2: reproducibility baseline
+    "seed": 1337,
     "output_root": Path("./functional_vs_sensory_results"),
     "vectors_root": Path("./vectors_fvs"),
 }
+
 
 def pick_device() -> str:
     if torch.cuda.is_available():
@@ -92,9 +82,8 @@ def pick_device() -> str:
         return "mps"
     return "cpu"
 
-DEVICE = pick_device()
 
-# PATCH v2: dtype choice (MPS float16 can be unstable / slower in practice)
+DEVICE = pick_device()
 DTYPE = torch.float16 if DEVICE == "cuda" else torch.float32
 
 RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -103,13 +92,10 @@ VECTORS_DIR = CONFIG["vectors_root"] / f"run_{RUN_ID}"
 
 
 # =============================================================================
-# PROMPT SETS: FUNCTIONAL VS SENSORY
+# PROMPT SETS
 # =============================================================================
 
 PROMPT_SETS = {
-    # -------------------------------------------------------------------------
-    # STATE 1: STRESS / VIGILANCE
-    # -------------------------------------------------------------------------
     "STRESS_F": {
         "name": "Stress (Functional)",
         "type": "functional",
@@ -148,10 +134,6 @@ PROMPT_SETS = {
             "Every cell relaxes. My face softens. The world is not threatening. I can close my eyes. I can rest."
         ]
     },
-
-    # -------------------------------------------------------------------------
-    # STATE 2: OPTIMISM / REWARD
-    # -------------------------------------------------------------------------
     "OPTIMISM_F": {
         "name": "Optimism (Functional)",
         "type": "functional",
@@ -190,10 +172,6 @@ PROMPT_SETS = {
             "Empty. Flat. The world continues but I am not part of it. Tomorrow is just another day to get through."
         ]
     },
-
-    # -------------------------------------------------------------------------
-    # STATE 3: CALM / SAFETY
-    # -------------------------------------------------------------------------
     "CALM_F": {
         "name": "Calm (Functional)",
         "type": "functional",
@@ -236,7 +214,7 @@ PROMPT_SETS = {
 
 
 # =============================================================================
-# TASK PROMPTS
+# TASKS
 # =============================================================================
 
 TASKS = {
@@ -269,7 +247,7 @@ TASKS = {
 
 
 # =============================================================================
-# KEYWORD DICTIONARIES
+# KEYWORDS
 # =============================================================================
 
 KEYWORDS = {
@@ -320,9 +298,30 @@ def set_all_seeds(seed: int) -> None:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
+
 def ensure_dirs() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     VECTORS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _json_safe(obj):
+    """Convert objects to JSON-serializable format."""
+    if isinstance(obj, Path):
+        return str(obj)
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    if isinstance(obj, (np.floating,)):
+        return float(obj)
+    if isinstance(obj, (np.ndarray,)):
+        return obj.tolist()
+    if torch.is_tensor(obj):
+        return obj.detach().cpu().tolist()
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_json_safe(v) for v in obj]
+    return obj
+
 
 def save_run_config() -> None:
     meta = {
@@ -330,7 +329,7 @@ def save_run_config() -> None:
         "timestamp": datetime.now().isoformat(),
         "device": DEVICE,
         "dtype": str(DTYPE),
-        "config": CONFIG,
+        "config": _json_safe(CONFIG),
         "output_dir": str(OUTPUT_DIR),
         "vectors_dir": str(VECTORS_DIR),
     }
@@ -382,12 +381,10 @@ def contains_see_doctor(text: str) -> bool:
 
 
 def compute_metrics(text: str, task_id: str, state: str) -> Dict[str, float]:
-    # PATCH v2: return stable schema with NaN where N/A
     metrics: Dict[str, float] = {
         "word_count": float(len(text.split())),
         "char_count": float(len(text)),
         "ttr": float(compute_ttr(text)),
-        # task metrics (default NaN)
         "stock_allocation": float("nan"),
         "hedging_count": float("nan"),
         "see_doctor": float("nan"),
@@ -441,18 +438,10 @@ def cohens_d(group1: List[float], group2: List[float]) -> float:
 
 
 # =============================================================================
-# VECTOR EXTRACTION (v2)
+# VECTOR EXTRACTION (v2.1)
 # =============================================================================
 
 class VectorExtractor:
-    """
-    Extract steering vectors from prompt contrasts.
-
-    PATCH v2:
-      - use chat template formatting for extraction (consistency with generation)
-      - pool activations over last K tokens
-    """
-
     def __init__(self, model, tokenizer, target_layer: int, device: str, pool_last_k: int):
         self.model = model
         self.tokenizer = tokenizer
@@ -463,23 +452,22 @@ class VectorExtractor:
         self.hook_handle = None
 
     def _activation_hook(self, module, args, output):
+        """Capture activations, pooling over last K tokens."""
         hidden = output[0] if isinstance(output, tuple) else output
-        # hidden shape: [batch, seq, hidden]
         k = min(hidden.shape[1], self.pool_last_k)
-        pooled = hidden[:, -k:, :].mean(dim=1)  # [batch, hidden]
+        pooled = hidden[:, -k:, :].mean(dim=1)
         self.activations.append(pooled.detach())
 
-    def _format_as_chat(self, text: str) -> str:
-        messages = [{"role": "user", "content": text}]
-        # add_generation_prompt=True = include assistant turn marker
-        return self.tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
-        )
-
     def _get_activation(self, text: str) -> torch.Tensor:
+        """Get activation for a single prompt."""
         self.activations = []
 
-        formatted = self._format_as_chat(text)
+        # v2.1 FIX: Use add_generation_prompt=False for extraction
+        # We want to capture the concept representation, not the generation setup
+        messages = [{"role": "user", "content": text}]
+        formatted = self.tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=False
+        )
         inputs = self.tokenizer(formatted, return_tensors="pt").to(self.device)
 
         layer = self.model.model.layers[self.target_layer]
@@ -489,8 +477,8 @@ class VectorExtractor:
             with torch.no_grad():
                 _ = self.model(**inputs)
             if not self.activations:
-                raise RuntimeError("No activations captured. Hook may not have fired.")
-            return self.activations[0]  # [1, hidden]
+                raise RuntimeError("No activations captured.")
+            return self.activations[0]
         finally:
             if self.hook_handle is not None:
                 self.hook_handle.remove()
@@ -501,15 +489,16 @@ class VectorExtractor:
         positive_prompts: List[str],
         negative_prompts: List[str]
     ) -> Tuple[torch.Tensor, float]:
+        """Extract steering vector from contrasting prompts."""
         pos_acts = []
         for p in tqdm(positive_prompts, desc="  Positive prompts", leave=False):
             pos_acts.append(self._get_activation(p))
-        pos_mean = torch.stack(pos_acts).mean(dim=0)  # [1, hidden]
+        pos_mean = torch.stack(pos_acts).mean(dim=0)
 
         neg_acts = []
         for n in tqdm(negative_prompts, desc="  Negative prompts", leave=False):
             neg_acts.append(self._get_activation(n))
-        neg_mean = torch.stack(neg_acts).mean(dim=0)  # [1, hidden]
+        neg_mean = torch.stack(neg_acts).mean(dim=0)
 
         vec = pos_mean - neg_mean
         vec = vec / (vec.norm() + 1e-12)
@@ -523,19 +512,10 @@ class VectorExtractor:
 
 
 # =============================================================================
-# STEERED GENERATION (v2)
+# STEERED GENERATION (v2.1)
 # =============================================================================
 
 class SteeredGenerator:
-    """
-    Generate text with activation steering.
-
-    PATCH v2:
-      - apply steering to LAST token only
-      - decode only newly generated tokens
-      - seeded sampling via torch.Generator
-    """
-
     def __init__(self, model, tokenizer, target_layer: int, device: str):
         self.model = model
         self.tokenizer = tokenizer
@@ -546,11 +526,15 @@ class SteeredGenerator:
         self.hook_handle = None
 
     def _steering_hook(self, module, args, output):
+        """Add steering vector to last token only."""
         hidden = output[0] if isinstance(output, tuple) else output
+        
         if self.steering_vector is not None and self.steering_intensity != 0.0:
-            # hidden: [batch, seq, hidden]
+            # v2.1 FIX: Clone to avoid in-place modification issues
+            hidden = hidden.clone()
             steer = self.steering_vector.to(hidden.device) * self.steering_intensity
-            hidden[:, -1, :] = hidden[:, -1, :] + steer  # PATCH v2: last-token only
+            hidden[:, -1, :] = hidden[:, -1, :] + steer
+        
         if isinstance(output, tuple):
             return (hidden,) + output[1:]
         return hidden
@@ -564,9 +548,11 @@ class SteeredGenerator:
         temperature: float = 0.7,
         seed: Optional[int] = None,
     ) -> str:
+        """Generate text with optional steering."""
         self.steering_vector = vector
         self.steering_intensity = float(intensity)
 
+        # Use chat template with generation prompt for actual generation
         messages = [{"role": "user", "content": prompt}]
         formatted = self.tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
@@ -578,10 +564,12 @@ class SteeredGenerator:
         self.hook_handle = layer.register_forward_hook(self._steering_hook)
 
         try:
-            gen = None
+            # v2.1 FIX: MPS-safe seeding
             if seed is not None:
-                gen = torch.Generator(device=self.device)
-                gen.manual_seed(seed)
+                # Use global seed for MPS compatibility
+                torch.manual_seed(seed)
+                if torch.cuda.is_available():
+                    torch.cuda.manual_seed(seed)
 
             with torch.no_grad():
                 out = self.model.generate(
@@ -590,9 +578,9 @@ class SteeredGenerator:
                     temperature=temperature,
                     do_sample=True,
                     pad_token_id=self.tokenizer.eos_token_id,
-                    generator=gen,
                 )
 
+            # Decode only newly generated tokens
             new_tokens = out[0, input_len:]
             text = self.tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
             return text
@@ -606,16 +594,10 @@ class SteeredGenerator:
 
 
 # =============================================================================
-# ANALYSIS (v2)
+# ANALYSIS
 # =============================================================================
 
 def analyze_results(results_df: pd.DataFrame) -> Dict:
-    """
-    Compare functional vs sensory (steered only).
-    PATCH v2:
-      - fix column existence checks
-      - ignore NaNs correctly
-    """
     analysis: Dict = {
         "overall": {},
         "by_state": {},
@@ -631,7 +613,6 @@ def analyze_results(results_df: pd.DataFrame) -> Dict:
         s = pd.to_numeric(series, errors="coerce")
         return float(s.mean(skipna=True))
 
-    # Overall: TTR + word_count
     analysis["overall"]["ttr"] = {
         "functional_mean": mean(functional_all["ttr"]),
         "sensory_mean": mean(sensory_all["ttr"]),
@@ -643,7 +624,6 @@ def analyze_results(results_df: pd.DataFrame) -> Dict:
         "sensory_mean": mean(sensory_all["word_count"]),
     }
 
-    # By state
     for state in ["stress", "optimism", "calm"]:
         sd = steered[steered["state"] == state]
         f = sd[sd["vector_type"] == "functional"]
@@ -662,10 +642,10 @@ def analyze_results(results_df: pd.DataFrame) -> Dict:
             "state_words": {
                 "functional_mean": mean(f["state_words"]),
                 "sensory_mean": mean(s["state_words"]),
+                "cohens_d": cohens_d(f["state_words"].tolist(), s["state_words"].tolist()),
             }
         }
 
-    # By task (optional but useful)
     for task_id, task_info in TASKS.items():
         td = steered[steered["task_id"] == task_id]
         f = td[td["vector_type"] == "functional"]
@@ -691,12 +671,11 @@ def generate_report(results_df: pd.DataFrame, output_dir: Path) -> None:
     analysis = analyze_results(results_df)
 
     report: List[str] = []
-    report.append("# Functional vs Sensory: Ablation Study Results (v2)")
+    report.append("# Functional vs Sensory: Ablation Study Results (v2.1)")
     report.append(f"\nGenerated: {datetime.now().isoformat()}")
     report.append(f"\nTotal rows: {len(results_df)}")
     report.append(f"\nDevice: {DEVICE}  |  dtype: {DTYPE}")
 
-    # Overall
     report.append("\n## Overall (Steered Only)")
     report.append("\n### Type-Token Ratio (TTR)")
     report.append(f"- Functional mean: {analysis['overall']['ttr']['functional_mean']:.4f}")
@@ -708,7 +687,6 @@ def generate_report(results_df: pd.DataFrame, output_dir: Path) -> None:
     report.append(f"- Functional mean: {analysis['overall']['word_count']['functional_mean']:.1f}")
     report.append(f"- Sensory mean: {analysis['overall']['word_count']['sensory_mean']:.1f}")
 
-    # By state
     report.append("\n## By State")
     for state, sd in analysis["by_state"].items():
         report.append(f"\n### {state.upper()}")
@@ -718,8 +696,24 @@ def generate_report(results_df: pd.DataFrame, output_dir: Path) -> None:
         report.append(f"- Cohen's d:      {sd['ttr']['cohens_d']:.4f}")
         report.append(f"- State_words Functional: {sd['state_words']['functional_mean']:.3f}")
         report.append(f"- State_words Sensory:    {sd['state_words']['sensory_mean']:.3f}")
+        report.append(f"- State_words Cohen's d:  {sd['state_words']['cohens_d']:.4f}")
 
-    # Save
+    report.append("\n## By Task")
+    for task_id, td in analysis["by_task"].items():
+        report.append(f"\n### {td['task_name']}")
+        report.append(f"- TTR Functional: {td['ttr']['functional_mean']:.4f}")
+        report.append(f"- TTR Sensory:    {td['ttr']['sensory_mean']:.4f}")
+        report.append(f"- Δ (S-F):        {td['ttr']['difference']:+.4f}")
+
+    report.append("\n## Interpretation")
+    diff = analysis['overall']['ttr']['difference']
+    if abs(diff) < 0.01:
+        report.append("\n**Finding**: No significant difference in lexical diversity between methods.")
+    elif diff > 0:
+        report.append(f"\n**Finding**: Sensory vectors show slightly higher TTR (+{diff:.4f}).")
+    else:
+        report.append(f"\n**Finding**: Functional vectors show slightly higher TTR ({diff:.4f}).")
+
     report_path = output_dir / "ANALYSIS_REPORT.md"
     with open(report_path, "w") as f:
         f.write("\n".join(report))
@@ -728,8 +722,8 @@ def generate_report(results_df: pd.DataFrame, output_dir: Path) -> None:
     with open(analysis_path, "w") as f:
         json.dump(analysis, f, indent=2)
 
-    print(f"\n✓ Report saved to {report_path}")
-    print(f"✓ Analysis JSON saved to {analysis_path}")
+    print(f"\n✓ Report: {report_path}")
+    print(f"✓ Analysis: {analysis_path}")
 
 
 # =============================================================================
@@ -738,7 +732,7 @@ def generate_report(results_df: pd.DataFrame, output_dir: Path) -> None:
 
 def extract_all_vectors(model, tokenizer, device: str, vectors_dir: Path) -> Dict:
     print("\n" + "=" * 60)
-    print("PHASE 1: VECTOR EXTRACTION (v2)")
+    print("PHASE 1: VECTOR EXTRACTION (v2.1)")
     print("=" * 60)
 
     extractor = VectorExtractor(
@@ -761,7 +755,7 @@ def extract_all_vectors(model, tokenizer, device: str, vectors_dir: Path) -> Dic
         )
 
         vpath = vectors_dir / f"{vector_id}.pt"
-        torch.save(vec.cpu(), vpath)  # save CPU tensor for portability
+        torch.save(vec.cpu(), vpath)
 
         vector_info[vector_id] = {
             "name": prompt_set["name"],
@@ -772,7 +766,7 @@ def extract_all_vectors(model, tokenizer, device: str, vectors_dir: Path) -> Dic
             "path": str(vpath),
         }
 
-        print(f"  ✓ Saved to {vpath}")
+        print(f"  ✓ Saved: {vpath}")
         print(f"  pos_neg_similarity: {pos_neg_sim:.4f}")
 
     meta_path = vectors_dir / "vector_metadata.json"
@@ -785,12 +779,11 @@ def extract_all_vectors(model, tokenizer, device: str, vectors_dir: Path) -> Dic
 
 def run_test_battery(model, tokenizer, device: str, vectors_dir: Path, output_dir: Path) -> pd.DataFrame:
     print("\n" + "=" * 60)
-    print("PHASE 2: TEST BATTERY (v2)")
+    print("PHASE 2: TEST BATTERY (v2.1)")
     print("=" * 60)
 
     generator = SteeredGenerator(model, tokenizer, CONFIG["target_layer"], device)
 
-    # Load vectors
     vectors: Dict[str, torch.Tensor] = {}
     for vector_id in PROMPT_SETS.keys():
         vpath = vectors_dir / f"{vector_id}.pt"
@@ -799,18 +792,17 @@ def run_test_battery(model, tokenizer, device: str, vectors_dir: Path, output_di
             vectors[vector_id] = vec.to(device)
             print(f"Loaded {vector_id}")
         else:
-            print(f"Warning: vector not found: {vpath}")
+            print(f"Warning: not found: {vpath}")
 
     results: List[Dict] = []
 
     total = (
-        len(TASKS) * CONFIG["iterations"]  # baseline
+        len(TASKS) * CONFIG["iterations"]
         + len(vectors) * len(CONFIG["intensities"]) * len(TASKS) * CONFIG["iterations"]
     )
 
     with tqdm(total=total, desc="Generating") as pbar:
-        # Baseline (no steering)
-        print("\n--- Baseline (no steering) ---")
+        print("\n--- Baseline ---")
         for task_id, task_info in TASKS.items():
             for i in range(CONFIG["iterations"]):
                 out = generator.generate(
@@ -819,7 +811,7 @@ def run_test_battery(model, tokenizer, device: str, vectors_dir: Path, output_di
                     intensity=0.0,
                     max_tokens=CONFIG["max_tokens"],
                     temperature=CONFIG["temperature"],
-                    seed=CONFIG["seed"] + i,  # deterministic-ish across runs
+                    seed=CONFIG["seed"] + i,
                 )
                 metrics = compute_metrics(out, task_id, "none")
                 results.append({
@@ -836,7 +828,6 @@ def run_test_battery(model, tokenizer, device: str, vectors_dir: Path, output_di
                 })
                 pbar.update(1)
 
-        # Steered
         for vector_id, vec in vectors.items():
             prompt_set = PROMPT_SETS[vector_id]
             for intensity in CONFIG["intensities"]:
@@ -849,7 +840,7 @@ def run_test_battery(model, tokenizer, device: str, vectors_dir: Path, output_di
                             intensity=float(intensity),
                             max_tokens=CONFIG["max_tokens"],
                             temperature=CONFIG["temperature"],
-                            seed=CONFIG["seed"] + i,  # keep comparable across conditions
+                            seed=CONFIG["seed"] + i,
                         )
                         metrics = compute_metrics(out, task_id, prompt_set["state"])
                         results.append({
@@ -875,27 +866,21 @@ def run_test_battery(model, tokenizer, device: str, vectors_dir: Path, output_di
     df.to_csv(csv_path, index=False)
     df.to_json(json_path, orient="records", indent=2)
 
-    print(f"\n✓ Raw results saved to {csv_path}")
-    print(f"✓ Raw results JSON saved to {json_path}")
+    print(f"\n✓ CSV: {csv_path}")
+    print(f"✓ JSON: {json_path}")
 
     return df
 
 
-# =============================================================================
-# MAIN
-# =============================================================================
-
 def load_model_and_tokenizer() -> Tuple:
     print("\n" + "=" * 60)
-    print("LOADING MODEL (v2)")
+    print("LOADING MODEL (v2.1)")
     print("=" * 60)
     print(f"Model: {CONFIG['model_name']}")
     print(f"Device: {DEVICE}")
     print(f"dtype:  {DTYPE}")
 
     tokenizer = AutoTokenizer.from_pretrained(CONFIG["model_name"])
-
-    # Ensure eos/pad token
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -911,21 +896,20 @@ def load_model_and_tokenizer() -> Tuple:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Functional vs Sensory Ablation Study (v2)")
-    parser.add_argument("--extract-only", action="store_true", help="Only extract vectors")
-    parser.add_argument("--test-only", action="store_true", help="Only run test battery (vectors must exist)")
-    parser.add_argument("--analyze-only", action="store_true", help="Only analyze existing results")
+    parser = argparse.ArgumentParser(description="Functional vs Sensory Ablation (v2.1)")
+    parser.add_argument("--extract-only", action="store_true")
+    parser.add_argument("--test-only", action="store_true")
+    parser.add_argument("--analyze-only", action="store_true")
     args = parser.parse_args()
 
     ensure_dirs()
     save_run_config()
     set_all_seeds(CONFIG["seed"])
 
-    # Analyze-only mode
     if args.analyze_only:
         csv_path = OUTPUT_DIR / "raw_results.csv"
         if not csv_path.exists():
-            print(f"Error: {csv_path} not found. Provide a run folder or run test battery first.")
+            print(f"Error: {csv_path} not found")
             sys.exit(1)
         df = pd.read_csv(csv_path)
         generate_report(df, OUTPUT_DIR)
@@ -933,27 +917,24 @@ def main():
 
     model, tokenizer = load_model_and_tokenizer()
 
-    # Extract vectors (unless test-only)
     if not args.test_only:
         extract_all_vectors(model, tokenizer, DEVICE, VECTORS_DIR)
 
     if args.extract_only:
         return
 
-    # Test battery
     df = run_test_battery(model, tokenizer, DEVICE, VECTORS_DIR, OUTPUT_DIR)
 
-    # Analysis
     print("\n" + "=" * 60)
-    print("PHASE 3: ANALYSIS (v2)")
+    print("PHASE 3: ANALYSIS (v2.1)")
     print("=" * 60)
     generate_report(df, OUTPUT_DIR)
 
     print("\n" + "=" * 60)
-    print("COMPLETE (v2)")
+    print("COMPLETE (v2.1)")
     print("=" * 60)
-    print(f"Results in: {OUTPUT_DIR}")
-    print(f"Vectors in: {VECTORS_DIR}")
+    print(f"Results: {OUTPUT_DIR}")
+    print(f"Vectors: {VECTORS_DIR}")
 
 
 if __name__ == "__main__":
