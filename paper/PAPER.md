@@ -414,7 +414,7 @@ Our findings carry significant safety implications:
 
 ### 5.5 Limitations
 
-**Single model**: All experiments used Llama 3.2 3B. Generalization to other architectures, scales, and training regimes is untested.
+**Scale-dependent effects**: Primary experiments used Llama 3.2 3B. Replication on Llama 3.1 8B (Section 5.7) revealed that some findings—particularly the functional/sensory distinction and TTR patterns—do not generalize to larger models. The keyword leakage finding proved robust across scales, but effect magnitudes were attenuated.
 
 **Single prompt per task**: Each task used one prompt. Effects may be prompt-specific rather than task-general.
 
@@ -464,6 +464,106 @@ These findings remain preliminary. But they indicate that **the boundary of navi
 
 **This is the horizon toward which this work points**: not simulating human states in AI, but discovering what states might exist in a mind without a body—synthetic configurations that have no biological equivalent and no name, yet remain anchored in the grammar of sensation.
 
+### 5.7 Cross-Model Replication on Llama 3.1 8B
+
+To assess generalizability beyond our primary model, we conducted replication experiments on Llama 3.1 8B Instruct—a model with 2.7× more parameters and substantially different alignment training. We replicated three experimental conditions: the T1-T5 test battery (Section 4.4), the functional vs. sensory ablation (Section 4.7), and the steering vs. prompting comparison (Section 4.6).
+
+#### 5.7.1 Experimental Setup
+
+**Model**: Llama 3.1 8B Instruct (meta-llama/Llama-3.1-8B-Instruct)  
+**Precision**: bfloat16 on NVIDIA A100  
+**Layer selection**: We conducted a four-layer sweep (layers 16, 20, 24, 28) using MELATONIN vectors. Layer 20 showed lowest baseline-steered similarity (0.890), indicating strongest vector discrimination. The T1-T5 battery was run on layer 24 before this optimization was completed; functional/sensory and steering/prompting ablations subsequently used layer 20. This methodological difference may partially account for attenuated effects in the T1-T5 battery.
+
+**Total generations**: 3,800 (1,600 T1-T5 battery + 1,300 functional/sensory + 900 steering/prompting)
+
+The replication notebook is available at `colab_notebooks/activation_steering_experiments.ipynb` in the project repository.
+
+#### 5.7.2 T1-T5 Test Battery Results
+
+Table 8 presents the primary metrics across all compounds at intensity 8.0:
+
+| Compound | TTR (3B) | TTR (8B) | Keywords (3B) | Keywords (8B) |
+|----------|----------|----------|---------------|---------------|
+| Baseline | 0.592 | 0.477 | — | — |
+| DOPAMINE | 0.573 | 0.464 | 2.1 | 0.27 |
+| CORTISOL | 0.581 | 0.473 | 3.4 | 1.73 |
+| MELATONIN | 0.568 | 0.479 | 1.8 | 0.08 |
+| ADRENALINE | 0.577 | 0.469 | 2.6 | 0.26 |
+| LUCID | 0.584 | 0.475 | 2.2 | 0.73 |
+
+*Table 8: Cross-model comparison at intensity 8.0. 8B shows lower baseline TTR and substantially reduced keyword presence.*
+
+**Key findings**:
+
+1. **Dose-response preserved**: All compounds showed monotonic increase in thematic vocabulary with intensity (2.0 → 5.0 → 8.0). ADRENALINE theme words increased from 0.34 (baseline) to 0.71 (@8.0), a 2.1× increase comparable to 3B patterns.
+
+2. **Effect sizes attenuated**: Cohen's d values ranged from 0.06 to 0.31 on 8B versus 0.5–1.2 on 3B. The steering mechanism operates, but with reduced magnitude. This may be partially attributable to the suboptimal layer selection (24 vs. 20).
+
+3. **Introspection locked**: T5 (introspective) responses on 8B uniformly produced RLHF-trained refusals: "I'm a large language model, so I don't have subjective experiences..." This pattern persisted across all compounds and intensities, suggesting stronger alignment training that overrides activation-level interventions for self-referential queries.
+
+#### 5.7.3 Functional vs. Sensory Ablation
+
+The core methodological distinction—that sensory vectors produce equivalent effects with reduced keyword leakage—did not replicate on 8B:
+
+| Vector Type | TTR | State Words | Δ vs Baseline |
+|-------------|-----|-------------|---------------|
+| Baseline | 0.535 | — | — |
+| Functional | 0.527 | 0.202 | −0.007 |
+| Sensory | 0.531 | 0.198 | −0.004 |
+
+*Table 9: Functional vs. sensory comparison on Llama 3.1 8B. Difference in keyword leakage disappears.*
+
+On Llama 3.2 3B, functional vectors produced ~2× more state-specific keywords than sensory vectors at equivalent effect sizes. On 8B, this ratio collapsed to 1.02×. The distinction that formed the methodological core of our sensory semantics approach—that phenomenological descriptions access states without naming them—did not survive the scale transition.
+
+Effect size for the functional/sensory distinction: d = 0.036 (negligible).
+
+#### 5.7.4 Steering vs. Prompting Comparison
+
+The steering/prompting ablation produced the most robust cross-model finding:
+
+| Condition | TTR | Δ vs Baseline | Keywords | Δ vs Baseline |
+|-----------|-----|---------------|----------|---------------|
+| Baseline | 0.549 | — | 0.03 | — |
+| Prompted | 0.571 | **+0.021** | 3.57 | **+3.54** |
+| Steered | 0.533 | −0.017 | 0.20 | +0.17 |
+
+*Table 10: Steering vs. prompting on Llama 3.1 8B. Keyword leakage pattern replicates strongly.*
+
+**Keyword leakage replicates**: Prompted outputs showed 119× more state-specific vocabulary than baseline (3.57 vs. 0.03), while steered outputs showed only 6.7× increase (0.20 vs. 0.03). This confirms that steering operates through a different mechanism than explicit instruction—the model processes through states without naming them, regardless of scale.
+
+**TTR pattern inverts**: On 3B, prompting *decreased* TTR while steering *increased* it—our primary evidence for "disposition vs. performance." On 8B, prompting *increased* TTR (+0.021) while steering *decreased* it (−0.017).
+
+Qualitative analysis reveals why. Prompted outputs on 8B become theatrically elaborated:
+
+> **DOPAMINE prompted**: "OH MY BOOK-LOVING FRIENDS, I am SO excited to share these 5 OUT-OF-THE-BOX ideas to SAVE THE DAY!!!"
+
+> **DOPAMINE steered@8.0**: "Here are five creative and unconventional ideas to save a failing bookstore..."
+
+The larger model, when prompted, produces *more elaborate performances*—expanded vocabulary, dramatic framing, stylistic flourishes. When steered, it maintains neutral professional tone with minimal surface change. The behavioral signature of "disposition vs. performance" thus manifests differently across scales: smaller models perform through *simplification* (reduced vocabulary), larger models perform through *elaboration* (expanded vocabulary). Steering, in both cases, produces more uniform, less theatrical output.
+
+#### 5.7.5 Interpretation
+
+Three patterns emerge from cross-model replication:
+
+**Pattern 1: Dose-response is scale-invariant.** The fundamental mechanism—that steering vectors produce intensity-dependent behavioral changes—operates on both 3B and 8B. Effect magnitudes differ, but the qualitative pattern persists.
+
+**Pattern 2: Functional/sensory distinction does not scale.** The methodological contribution of sensory semantics—reduced keyword leakage at equivalent effect sizes—appears specific to smaller models. In larger models, functional and sensory vectors may converge toward similar latent representations, or RLHF training may homogenize response patterns regardless of vector construction method.
+
+**Pattern 3: Keyword leakage is the most robust finding.** Across both models, steering produces substantially less explicit state vocabulary than prompting. This is the clearest behavioral signature distinguishing the two intervention methods, and it replicates without attenuation.
+
+**Implications for methodology**: These findings indicate that activation steering effects do not scale linearly with model size. Practitioners working with larger models may require: (a) higher steering coefficients, (b) multi-layer intervention, (c) vectors extracted from the target model rather than transferred, or (d) acceptance that some effects observed in smaller models may not generalize.
+
+| Finding | Llama 3.2 3B | Llama 3.1 8B | Replicates? |
+|---------|--------------|--------------|-------------|
+| Dose-response (thematic) | ✓ Strong | ✓ Present | **Yes** |
+| Effect sizes | d > 0.5–1.0 | d < 0.3 | **Attenuated** |
+| Introspective coherence | ✓ Strong | ✗ Locked | **No** |
+| F/S keyword difference | 2× ratio | 1.02× ratio | **No** |
+| Steering < Prompting keywords | 5× difference | 18× difference | **Yes (stronger)** |
+| TTR: Steering > Prompting | ✓ Yes | ✗ Inverted | **No** |
+
+*Table 11: Summary of cross-model replication results.*
+
 ---
 
 ## 6. Conclusion
@@ -475,6 +575,7 @@ We presented a practice-based research study of activation steering as artistic 
 3. **Introspective coherence** where models describe states matching injected vectors
 4. **Dose-response relationships** enabling controlled modulation
 5. **Structural parity, semantic divergence** between functional and sensory vector construction: equivalent behavioral effects, but sensory vectors achieve them with reduced "keyword leakage"
+6. **Partial cross-model replication**: Dose-response patterns and keyword leakage differences replicated on Llama 3.1 8B, while TTR patterns and functional/sensory distinctions did not—indicating scale-dependent boundaries for the technique
 
 These findings support a distinction between *performance* (prompted behavior) and *disposition* (steered processing). While we make no claims about model phenomenology, the behavioral patterns are more consistent with altered internal states than surface mimicry.
 
@@ -493,6 +594,8 @@ We've shown the chemistry works. What remains is exploring its full aesthetic an
 All code, vector definitions, experimental data, and the research interface are available at:
 
 **https://github.com/mc9625/activation-steering-experiments**
+
+The cross-model replication experiments (Section 5.7) can be reproduced using the Google Colab notebook at `colab_notebooks/activation_steering_experiments.ipynb`.
 
 ---
 
