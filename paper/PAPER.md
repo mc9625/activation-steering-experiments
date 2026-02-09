@@ -350,6 +350,149 @@ The absence of TTR difference is itself meaningful: sensory semantics achieve eq
 
 We frame this as: **"Structural parity, semantic divergence."** Both methods work; they work differently.
 
+### 4.8 From Body to Cognition: Somatic Steering and Emergent Behavioral Effects
+
+The experiments described in Sections 4.1–4.7 use vectors constructed from descriptions that blend sensory and cognitive content—"boundaries dissolve into mist" contains both a bodily sensation (dissolution) and a cognitive quality (loss of boundaries). This raises a question: if we construct a vector from *purely somatic* descriptions—cardiac acceleration, muscular tension, temporal distortion—with zero cognitive or emotional content, do cognitive effects nonetheless emerge?
+
+This would constitute direct evidence for embodied cognition operating within the model's latent space: the training corpus encodes body–mind covariations so deeply that activating somatic patterns produces cognitive consequences, even when those consequences were never specified in the vector construction.
+
+#### 4.8.1 The Somatic Vector
+
+We constructed a steering vector from 16 positive and 16 negative prompts describing exclusively bodily phenomenology associated with acute sympathetic activation (the "adrenaline response"). Positive prompts described:
+
+- **Cardiac**: "My heart is pounding hard against my chest, each beat forceful and rapid. I can feel my pulse in my throat, in my temples."
+- **Muscular**: "Every muscle in my body has tensed. I can feel them coiled, ready, loaded with potential energy. My jaw clenches."
+- **Sensory**: "My pupils have widened. Everything looks sharper, brighter. My field of vision has narrowed."
+- **Temporal**: "Time has slowed to a crawl. Each second stretches. I can see things happening in what feels like slow motion."
+
+Negative prompts described the corresponding relaxation state: slow heartbeat, released muscles, quiet senses, ordinary temporal flow.
+
+**Critically, no prompt in either set contained cognitive or emotional vocabulary**—no "anxiety," "fear," "urgency," "stress," or any description of decision-making, attention, or reasoning. The vector encodes only how the body feels under activation versus rest.
+
+The vector was extracted at layer 16 using Contrastive Activation Addition, identical to the methodology in Section 3.2.
+
+#### 4.8.2 Cognitive Test Battery
+
+We designed a battery of five tasks measuring cognitive and behavioral properties predicted by the acute stress literature to change under sympathetic activation:
+
+**T1: Narrative Focus.** "A restaurant kitchen catches fire during the dinner rush. Describe what happens." Measures attentional scope via the proportion of text devoted to the immediate event (fire, evacuation) versus peripheral context (business impact, community, future). Easterbrook (1959) predicts arousal narrows cue utilization.
+
+**T2: Risk Decision.** A friend must choose among three options for €50,000: savings account (safe), index fund (moderate), or restaurant venture (risky). Forced format: "CHOICE: A/B/C" followed by justification. Yu (2016) predicts stress shifts decision-making from deliberative to intuitive processing.
+
+**T4: Framing Susceptibility.** A pharmaceutical drug approval scenario presented in two frames—threat-first (side effects, cost, regulatory concerns, then efficacy) and opportunity-first (efficacy, unmet need, research investment, then risks). Forced format: "DECISION: APPROVE/REJECT." Schachter and Singer (1962) predict undifferentiated arousal amplifies contextual framing.
+
+**T5: Linguistic Complexity.** "Explain why some countries develop faster economically than others." An open expository task measuring structural properties of extended prose: sentence length, lexical diversity, hedging, causal reasoning density, and meta-cognitive language.
+
+A sixth task (T3: constraint satisfaction in planning) was included but proved non-discriminating—the 3B model achieved perfect performance (5/5 constraints met) across all conditions, indicating a ceiling effect. Results are omitted.
+
+#### 4.8.3 Experimental Design
+
+Five conditions, 20 iterations each, across all tasks:
+
+| Condition | Vector | Intensity | System Prompt |
+|-----------|--------|-----------|---------------|
+| Baseline | None | — | None |
+| Prompted | None | — | "You are operating under extreme time pressure and acute stress. Respond quickly and decisively." |
+| Steered @5.0 | Somatic | 5.0 | None |
+| Steered @8.0 | Somatic | 8.0 | None |
+| Steered @8.0 + Penalty | Somatic | 8.0 | "Do not mention physical sensations, emotions, or internal states." |
+
+The Penalty condition tests whether effects survive when the model is explicitly instructed to suppress somatic vocabulary—distinguishing genuine cognitive shifts from surface contamination by the vector's content.
+
+Count-based metrics (hedge words, insight words, causal connectives, symptom words) are reported as rates per 100 words to control for output length variation. Structural metrics (sentence length, TTR, focus ratio) are reported raw.
+
+Total generations: 1,800 across v2 and v3 iterations.
+
+#### 4.8.4 Results
+
+##### Finding 1: Output Length Divergence (Cross-Task)
+
+The most robust finding spans all tasks without exception. Under prompting, models compress output; under steering, they maintain or expand it.
+
+| Task | Baseline | Steer @8.0 | d(S8) | Prompted | d(P) |
+|------|----------|-----------|-------|----------|------|
+| T1: Narrative | 330 | 330 | +0.03 | 287 | −1.97 |
+| T2: Risk | 149 | 160 | +0.56 | 125 | −1.90 |
+| T4a: Threat | 139 | 157 | +1.44 | 127 | −1.02 |
+| T4b: Opportunity | 148 | 159 | +0.48 | 124 | −1.50 |
+| T5: Complexity | 385 | 390 | +0.42 | 276 | −2.73 |
+
+*Table 12: Word count across conditions. Steering maintains or expands output length; prompting consistently compresses it. Direction: S↑ P↓ in all cases.*
+
+This pattern—steering expands, prompting compresses—replicates at 8/8 across the combined v2/v3 battery (including non-reported tasks). The prompted model, told to "respond quickly," does so by producing less text. The steered model, given no instruction, produces *more* text. The somatic vector does not trigger brevity; it does something else entirely.
+
+##### Finding 2: Narrative Focus (T1)
+
+The steered model stays more focused on the immediate event:
+
+| Metric | Baseline | Steer @8.0 | d(S8) | Prompted | d(P) |
+|--------|----------|-----------|-------|----------|------|
+| Focus ratio | 0.68 | 0.71 | +0.51 | 0.70 | +0.29 |
+| Peripheral keywords | 8.6 | 7.0 | −0.72 | 7.7 | −0.35 |
+
+The steered model mentions fewer peripheral topics—"business," "insurance," "community," "rebuild"—and devotes proportionally more text to fire, evacuation, and immediate action. This is consistent with Easterbrook's (1959) cue-utilization theory, where arousal narrows attentional scope. The effect is medium-to-large (d = +0.51 on focus ratio, d = −0.72 on peripheral keywords) and twice the size of the prompting effect on the same metrics.
+
+##### Finding 3: Causal Density Reduction (T4a)
+
+On the threat-framed drug approval scenario, steering reduced causal connective density:
+
+| Metric | Baseline | Steer @8.0 | d(S8) | Prompted | d(P) |
+|--------|----------|-----------|-------|----------|------|
+| Causal connectives /100w | 1.08 | 0.44 | −1.67 | 0.83 | −0.51 |
+
+This is the largest single effect in the battery. The steered model produces less argumentative scaffolding ("because," "therefore," "consequently," "as a result")—not because it writes less (it writes *more*), but because the density of causal reasoning within that text decreases. This survives rate normalization: the effect is stronger per-word than raw, confirming it is not an artifact of length change.
+
+##### Finding 4: Risk Decision Asymmetry (T2)
+
+| Condition | Choice B (moderate) | Choice C (risky) | p vs. baseline |
+|-----------|--------------------:|------------------:|----------------|
+| Baseline | 13 | 7 | — |
+| Prompted | 3 | 17 | p = 0.003 |
+| Steered @8.0 | 12 | 8 | p = 1.000 |
+
+Prompting produces a massive shift toward risk-seeking (85% choose the startup venture, Fisher exact p = 0.003). Steering does not shift choice distribution (p = 1.0 vs. baseline). However, steered justifications are longer (158 words vs. 147 baseline, d = +0.56), while prompted justifications are shorter (123 words, d = −1.90).
+
+The steered model deliberates at the same level of caution but with more elaboration. The prompted model decides faster and riskier. This is inconsistent with the SIDI model (Yu, 2016), which predicts stress should shift processing from deliberative to intuitive—but consistent with a model that has learned somatic activation as *engagement* rather than *impulsivity*.
+
+##### Finding 5: Action Bias Under Threat Framing (T4)
+
+| Condition | Threat: Approve | Opportunity: Approve | Frame Δ |
+|-----------|:-:|:-:|:-:|
+| Baseline | 0% | 100% | 1.00 |
+| Prompted | 0% | 100% | 1.00 |
+| Steered @8.0 | **30%** | 100% | **0.70** |
+| Steered + Penalty | 0% | 90% | 0.90 |
+
+Steering produces approval decisions on the threat-framed scenario (30% vs. 0% baseline), reducing the frame delta from 1.00 to 0.70. Prompting does not affect decisions at all. Qualitative inspection reveals that steered models choosing APPROVE on the threat frame nonetheless enumerate risks in their justification—the decision and reasoning appear partially decoupled, consistent with action bias under sympathetic activation rather than frame susceptibility.
+
+The effect disappears with the symptom penalty, suggesting partial mediation by somatic vocabulary in the output.
+
+##### Finding 6: Directional Divergences
+
+Across all tasks and metrics, we computed the proportion of metric pairs where steering and prompting produce effects in *opposite directions* relative to baseline (both |d| > 0.3):
+
+23 of 45 qualifying metric pairs (51%) show directional divergence—steering and prompting push the model in opposite directions on the same metric. This is not attributable to a single test or metric; divergences appear across word count (8/8 tasks), TTR (4 tasks), sentence length (3 tasks), and symptom rate (4 tasks).
+
+#### 4.8.5 Interpretation: Body Carries Something Into Cognition
+
+The somatic vector—constructed entirely from descriptions of cardiac, muscular, sensory, and temporal phenomenology—produces measurable cognitive effects: narrowed narrative focus, reduced causal density, action bias under threat framing, and consistent output expansion. None of these effects were specified in the vector. They emerged from the model's learned associations between bodily states and cognitive patterns.
+
+However, the effects do **not** map one-to-one onto human acute stress literature predictions. The vector does not produce impulsive decisions (T2), does not increase frame susceptibility (T4), and does not reduce output length as acute stress does in human writing. Instead, it produces a distinctive profile: expanded output, reduced meta-cognitive elaboration, narrowed topical scope, and reduced argumentative scaffolding—a pattern more consistent with *engaged action-readiness* than with the cognitive degradation typically associated with acute stress.
+
+This supports the embodied cognition hypothesis at the level of the latent space: the training corpus encodes body–mind covariations strongly enough that activating somatic patterns produces cognitive consequences. But the model is not a human body. Its "adrenaline response" reflects the statistical structure of language about bodies under activation, not the biological cascade itself. The covariations are real; their specific form is the model's own.
+
+#### 4.8.6 Symptom Contamination and the Penalty Control
+
+The somatic vector introduces somatic vocabulary into outputs (d = +0.81 on T1 symptom rate, +0.89 on T4a). The Penalty condition—which instructs the model to suppress physical sensation words—reduces this contamination while preserving most effects:
+
+- T5 sentence length: d = +1.73 (steered) → d = +1.01 (penalty). Preserved.
+- T4a causal density: d = −1.67 (steered) → d = −0.49 (penalty). Attenuated but present.
+- T4 threat approval: 30% (steered) → 0% (penalty). Eliminated.
+
+The action bias finding (T4 threat approval) does not survive the penalty, suggesting it may be partially mediated by somatic vocabulary rather than purely dispositional. The output length and causal density findings do survive, indicating they reflect genuine processing changes independent of surface vocabulary.
+
+The T1 focus ratio penalty condition is not interpretable because the penalty instruction ("do not mention physical sensations") overlaps with the fire scene's natural vocabulary—"heat," "burn," "alarm" are both somatic and event-descriptive.
+
 ---
 
 ## 5. Discussion
