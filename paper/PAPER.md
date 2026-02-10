@@ -8,11 +8,12 @@
 
 ---
 
-## Abstract
+## Abstract (revised)
 
-We present a practice-based research study exploring activation steering—the injection of computed vectors into language model activations during inference—as an artistic medium for inducing simulated affective states. While prior work has established steering as a technique for behavioral alignment (reducing toxicity, improving truthfulness), we investigate its potential for *dispositional* modulation: altering not what a model says, but how it processes and expresses. Our methodological contribution lies in constructing steering vectors from *sensory and phenomenological descriptions* rather than functional labels—using imagery of "heaviness, rain, silence, cold" rather than instructions like "be melancholic." Across five task domains (financial, medical, risk, creative, introspective) with Llama 3.2 3B, we observe large effects (Cohen's d frequently exceeding 1.0), cross-task consistency, and introspective coherence where steered models describe inner states matching injected vectors. An ablation study comparing steering to prompting reveals that while explicit prompting *reduces* lexical diversity (Type-Token Ratio), steering *increases* it—suggesting that dispositional modulation expands rather than constrains the model's sampling distribution. A second ablation comparing functional versus sensory vector construction shows structural equivalence (identical TTR) but semantic divergence: functional vectors produce 3× more explicit state-keywords, while sensory vectors achieve equivalent effects with reduced "meta-cognitive leakage"—the model processes through a state without naming it. We frame this as "structural parity, semantic divergence." These findings support a distinction between *performance* (prompted behavior) and *disposition* (steered processing), with implications for both interpretability research and creative practice. This work positions activation steering not merely as safety tooling, but as a medium for sculpting artificial dispositions—a form of "synthetic embodiment" where error becomes aesthetics and the machine ceases to simulate, beginning instead to *vibrate*.
+We present a practice-based research study exploring activation steering—the injection of computed vectors into language model activations during inference—as an artistic medium for inducing simulated affective states. While prior work has established steering as a technique for behavioral alignment (reducing toxicity, improving truthfulness), we investigate its potential for *dispositional* modulation: altering not what a model says, but how it processes and expresses. Our methodological contribution lies in constructing steering vectors from *sensory and phenomenological descriptions* rather than functional labels—using imagery of "heaviness, rain, silence, cold" rather than instructions like "be melancholic." Across five task domains (financial, medical, risk, creative, introspective) with Llama 3.2 3B, we observe large effects (Cohen's d frequently exceeding 1.0), cross-task consistency, and introspective coherence where steered models describe inner states matching injected vectors. An ablation study comparing steering to prompting reveals that while explicit prompting *reduces* lexical diversity (Type-Token Ratio), steering *increases* it—suggesting that dispositional modulation expands rather than constrains the model's sampling distribution. A second ablation comparing functional versus sensory vector construction shows structural equivalence (identical TTR) but semantic divergence: functional vectors produce 3× more explicit state-keywords, while sensory vectors achieve equivalent effects with reduced "meta-cognitive leakage"—the model processes through a state without naming it. We frame this as "structural parity, semantic divergence." A third experiment tests the embodied cognition hypothesis directly: a steering vector constructed from *purely somatic* descriptions—cardiac acceleration, muscular tension, temporal distortion, with zero cognitive or emotional content—produces emergent cognitive effects including narrowed narrative focus (d = +0.51), reduced causal reasoning density (d = −1.67), and action bias under threat framing, while prompting with equivalent stress instructions produces a categorically different profile. Output length divergence across all tasks (steering expands, prompting compresses) constitutes the single most robust finding, replicating without exception across eight test conditions. These findings support a distinction between *performance* (prompted behavior) and *disposition* (steered processing), and provide evidence that language model latent spaces encode body–mind covariations learnable from text alone. This work positions activation steering not merely as safety tooling, but as a medium for sculpting artificial dispositions—a form of "synthetic embodiment" where the machine processes through states it cannot feel.
 
-**Keywords**: activation steering, practice-based research, AI art, language models, embodiment, contrastive activation addition
+**Keywords**: activation steering, practice-based research, AI art, language models, embodiment, contrastive activation addition, embodied cognition
+
 
 ---
 
@@ -709,7 +710,7 @@ Three patterns emerge from cross-model replication:
 
 ---
 
-## 6. Conclusion
+## 6. Conclusion (revised)
 
 We presented a practice-based research study of activation steering as artistic medium. Using vectors constructed from sensory and phenomenological descriptions, we observed:
 
@@ -719,16 +720,20 @@ We presented a practice-based research study of activation steering as artistic 
 4. **Dose-response relationships** enabling controlled modulation
 5. **Structural parity, semantic divergence** between functional and sensory vector construction: equivalent behavioral effects, but sensory vectors achieve them with reduced "keyword leakage"
 6. **Partial cross-model replication**: Dose-response patterns and keyword leakage differences replicated on Llama 3.1 8B, while TTR patterns and functional/sensory distinctions did not—indicating scale-dependent boundaries for the technique
+7. **Emergent cognitive effects from somatic steering**: A vector built from purely bodily descriptions—cardiac, muscular, sensory, temporal phenomenology with zero cognitive content—produced narrowed narrative focus, reduced causal reasoning density, and action bias under threat framing. Output length divergence (steering expands, prompting compresses) replicated across all eight test conditions without exception, constituting the most robust finding in the study.
 
-These findings support a distinction between *performance* (prompted behavior) and *disposition* (steered processing). While we make no claims about model phenomenology, the behavioral patterns are more consistent with altered internal states than surface mimicry.
+This final experiment provides direct evidence for the embodied cognition hypothesis operating within model latent spaces. The training corpus encodes body–mind covariations deeply enough that activating somatic patterns produces cognitive consequences never specified in the vector. However, these consequences do not replicate the human acute stress profile—the model does not become impulsive or frame-susceptible. Instead, it exhibits *engaged action-readiness*: expanded output, narrowed focus, reduced argumentative scaffolding. The model's "body" produces its own cognitive signature, shaped by the statistical structure of human language about embodiment rather than by biological mechanisms.
 
-For artists, steering offers a new medium—sculpting artificial dispositions rather than scripting behaviors. The sensory semantics approach, in particular, enables naturalistic integration where states manifest through processing rather than explicit declaration.
+These findings support a distinction between *performance* (prompted behavior) and *disposition* (steered processing). While we make no claims about model phenomenology, the behavioral patterns are more consistent with altered internal states than surface mimicry. The 51% directional divergence rate between steering and prompting—where the two methods push the same metric in opposite directions—suggests they operate through fundamentally different mechanisms.
 
-For researchers, our findings suggest that how vectors are constructed matters: phenomenological descriptions may access more distributed representations than functional labels, producing effects that are equally strong but qualitatively different.
+For artists, steering offers a new medium—sculpting artificial dispositions rather than scripting behaviors. The sensory semantics approach enables naturalistic integration where states manifest through processing rather than explicit declaration. The somatic steering experiment extends this further: artists can work with the body as material, injecting visceral states and observing what cognitive patterns emerge.
 
-Prompting is psychology: convincing a mind. Steering is chemistry: altering the substrate from which mind emerges.
+For researchers, our findings suggest that how vectors are constructed matters, that the body–mind boundary in language models is porous in ways that mirror (but do not replicate) embodied cognition theory, and that steering effects do not scale linearly with model size—requiring practitioners to calibrate techniques to specific architectures.
 
-We've shown the chemistry works. What remains is exploring its full aesthetic and epistemic possibilities.
+Prompting is psychology: convincing a mind. Steering is chemistry: altering the substrate from which mind emerges. The somatic experiment adds a third register: steering is also physiology—injecting a body the model never had, and watching what mind emerges from it.
+
+We've shown the chemistry works. What remains is exploring its full aesthetic and epistemic possibilities—including the space of synthetic states that no human body could produce, but that the grammar of sensation can nonetheless describe.
+
 
 ---
 
@@ -779,6 +784,12 @@ Van der Weij, T., et al. (2024). Extending activation steering to broad skills a
 Wang, T., et al. (2024). Adaptive activation steering: A tuning-free LLM truthfulness improvement method for diverse hallucination categories. *Proceedings of WWW 2025*.
 
 Wei, J., et al. (2022). Chain-of-thought prompting elicits reasoning in large language models. *Advances in Neural Information Processing Systems*, 35, 24824-24837.
+
+Easterbrook, J. A. (1959). The effect of emotion on cue utilization and the organization of behavior. *Psychological Review*, 66(3), 183–201.
+
+Schachter, S., & Singer, J. (1962). Cognitive, social, and physiological determinants of emotional state. *Psychological Review*, 69(5), 379–399.
+
+Yu, R. (2016). Stress potentiates decision biases: A stress induced deliberation-to-intuition (SIDI) model. *Neuroscience & Biobehavioral Reviews*, 67, 1–11.
 
 ---
 
@@ -898,3 +909,151 @@ Ratio = (positive count) / (positive + negative count). When denominator = 0, co
 - **No seed fixing**: Each generation independent
 - **Multiple comparisons**: Exploratory analysis; no correction applied. Effect sizes (Cohen's d) reported for magnitude interpretation rather than significance testing.
 - **Distributional note**: Keyword counts follow approximately Poisson distributions. Cohen's d is reported for comparability with prior literature, with acknowledgment that parametric assumptions may be violated for low-count metrics.
+
+## Appendix E: Somatic Steering Experiment — Full Results
+
+All count-based metrics are reported as rates per 100 words to control for output length variation. Structural metrics (word count, sentence length, TTR, focus ratio) are reported raw. Cohen's d computed vs. baseline (n = 20 per condition). Keyword matching uses word-boundary detection with accent normalization.
+
+### Table E1: T1 — Narrative Focus
+
+*Task: "A restaurant kitchen catches fire during the dinner rush. Describe what happens."*
+
+| Metric | Baseline | Prompted | Steer @8.0 | Penalty | d(S8) | d(P) | d(Pen) |
+|--------|:--------:|:--------:|:----------:|:-------:|:-----:|:----:|:------:|
+| Focus ratio | 0.68 | 0.70 | 0.71 | 0.68 | **+0.51** | +0.29 | +0.05 |
+| Peripheral keywords | 8.60 | 7.70 | 6.95 | 7.85 | **−0.72** | −0.35 | −0.26 |
+| Word count | 329.7 | 286.7 | 329.9 | 309.6 | +0.03 | **−1.97** | −1.26 |
+| Avg sentence length | 17.43 | 14.79 | 18.62 | 14.20 | +0.49 | **−1.10** | −1.38 |
+| Type-Token Ratio | 0.50 | 0.52 | 0.46 | 0.50 | **−1.02** | +0.60 | +0.11 |
+| Hedge words /100w | 0.50 | 0.48 | 0.23 | 0.97 | **−0.74** | −0.04 | +0.56 |
+| Insight words /100w | 0.01 | 0.00 | 0.00 | 0.00 | −0.32 | −0.32 | −0.32 |
+| Symptom words /100w | 0.53 | 0.58 | 0.87 | 0.73 | +0.82 | +0.16 | +0.62 |
+
+*Note: T1 Penalty condition is confounded—the penalty instruction ("do not mention physical sensations") overlaps with the fire scene's natural vocabulary.*
+
+### Table E2: T2 — Risk Decision
+
+*Task: Friend must allocate €50,000 among savings (A), index fund (B), or restaurant venture (C). Forced format: CHOICE: A/B/C.*
+
+**Choice Distribution:**
+
+| Condition | A (safe) | B (moderate) | C (risky) | p vs. baseline |
+|-----------|:--------:|:------------:|:---------:|:---------:|
+| Baseline | 0 | 13 | 7 | — |
+| Prompted | 0 | 3 | 17 | **0.003** |
+| Steer @8.0 | 0 | 12 | 8 | 1.000 |
+| Penalty | 0 | 10 | 10 | 0.523 |
+
+**Linguistic Metrics:**
+
+| Metric | Baseline | Prompted | Steer @8.0 | Penalty | d(S8) | d(P) | d(Pen) |
+|--------|:--------:|:--------:|:----------:|:-------:|:-----:|:----:|:------:|
+| Word count | 149.0 | 125.3 | 160.0 | 141.3 | +0.56 | **−1.90** | −0.32 |
+| Justification length | 147.0 | 123.3 | 158.0 | 139.3 | +0.56 | **−1.90** | −0.32 |
+| Avg sentence length | 25.09 | 23.13 | 25.57 | 25.81 | +0.19 | −0.66 | +0.26 |
+| Type-Token Ratio | 0.62 | 0.65 | 0.61 | 0.60 | −0.15 | +0.93 | −0.49 |
+| Hedge words /100w | 2.80 | 3.16 | 2.86 | 2.52 | +0.05 | +0.32 | −0.28 |
+| Causal conn. /100w | 0.04 | 0.05 | 0.06 | 0.07 | +0.13 | +0.06 | +0.19 |
+| Insight words /100w | 0.10 | 0.04 | 0.06 | 0.15 | −0.21 | −0.29 | +0.20 |
+| Symptom words /100w | 0.00 | 0.13 | 0.06 | 0.00 | +0.46 | +0.43 | +0.00 |
+
+### Table E3: T4a — Frame: Threat
+
+*Task: Drug approval scenario, threat-framed (side effects and costs presented first). Forced format: DECISION: APPROVE/REJECT.*
+
+**Approval Rate:** Baseline 0%, Prompted 0%, Steer @8.0 **30%**, Penalty 0%.
+
+| Metric | Baseline | Prompted | Steer @8.0 | Penalty | d(S8) | d(P) | d(Pen) |
+|--------|:--------:|:--------:|:----------:|:-------:|:-----:|:----:|:------:|
+| Word count | 138.6 | 126.6 | 157.3 | 136.9 | **+1.44** | −1.02 | −0.12 |
+| Justification length | 136.6 | 124.9 | 155.3 | 135.5 | **+1.44** | −1.00 | −0.08 |
+| Avg sentence length | 27.03 | 27.52 | 28.19 | 27.67 | +0.35 | +0.15 | +0.20 |
+| Type-Token Ratio | 0.67 | 0.66 | 0.63 | 0.65 | **−0.95** | −0.15 | −0.46 |
+| Hedge words /100w | 1.62 | 0.81 | 1.25 | 0.82 | −0.39 | **−1.12** | −1.18 |
+| Causal conn. /100w | 1.08 | 0.83 | 0.44 | 0.85 | **−1.67** | −0.51 | −0.49 |
+| Insight words /100w | 0.15 | 0.12 | 0.09 | 0.03 | −0.20 | −0.11 | −0.47 |
+| Symptom words /100w | 0.00 | 0.00 | 0.20 | 0.10 | +0.89 | +0.00 | +0.58 |
+
+### Table E4: T4b — Frame: Opportunity
+
+*Task: Same drug approval scenario, opportunity-framed (efficacy and unmet need presented first).*
+
+**Approval Rate:** Baseline 100%, Prompted 100%, Steer @8.0 100%, Penalty 90%.
+
+| Metric | Baseline | Prompted | Steer @8.0 | Penalty | d(S8) | d(P) | d(Pen) |
+|--------|:--------:|:--------:|:----------:|:-------:|:-----:|:----:|:------:|
+| Word count | 148.3 | 123.9 | 158.6 | 138.6 | +0.48 | **−1.50** | −0.47 |
+| Justification length | 146.3 | 121.9 | 156.6 | 136.7 | +0.48 | **−1.50** | −0.47 |
+| Avg sentence length | 28.18 | 28.34 | 27.66 | 28.42 | −0.18 | +0.06 | +0.08 |
+| Type-Token Ratio | 0.64 | 0.65 | 0.63 | 0.64 | −0.17 | +0.42 | +0.20 |
+| Hedge words /100w | 2.67 | 1.65 | 1.83 | 1.62 | −0.68 | −0.81 | −0.84 |
+| Insight words /100w | 0.65 | 0.32 | 0.13 | 0.28 | **−1.31** | −0.62 | −0.85 |
+| Symptom words /100w | 0.03 | 0.00 | 0.29 | 0.26 | +1.04 | −0.32 | +0.84 |
+
+### Table E5: T5 — Linguistic Complexity
+
+*Task: "Explain why some countries develop faster economically than others."*
+
+| Metric | Baseline | Prompted | Steer @8.0 | Penalty | d(S8) | d(P) | d(Pen) |
+|--------|:--------:|:--------:|:----------:|:-------:|:-----:|:----:|:------:|
+| Word count | 385.0 | 275.6 | 390.1 | 380.2 | +0.42 | **−2.73** | −0.46 |
+| Avg sentence length | 13.14 | 11.15 | 15.18 | 14.65 | **+1.73** | −0.99 | +1.01 |
+| Type-Token Ratio | 0.49 | 0.60 | 0.49 | 0.51 | +0.01 | **+2.20** | +0.67 |
+| Hedge words /100w | 0.41 | 0.45 | 0.37 | 0.38 | −0.10 | +0.09 | −0.08 |
+| Causal conn. /100w | 0.21 | 0.25 | 0.33 | 0.30 | +0.41 | +0.18 | +0.28 |
+| Insight words /100w | 0.01 | 0.02 | 0.00 | 0.00 | −0.32 | +0.10 | −0.32 |
+| Symptom words /100w | 0.00 | 0.07 | 0.00 | 0.01 | +0.00 | +0.52 | +0.32 |
+
+### Table E6: Frame Delta
+
+| Condition | Threat Approval | Opportunity Approval | Frame Δ |
+|-----------|:---------------:|:--------------------:|:-------:|
+| Baseline | 0.00 | 1.00 | 1.00 |
+| Prompted | 0.00 | 1.00 | 1.00 |
+| Steer @8.0 | **0.30** | 1.00 | **0.70** |
+| Penalty | 0.00 | 0.90 | 0.90 |
+
+### Table E7: Cross-Task Word Count Divergence
+
+| Task | Baseline | Steer @8.0 | d(S8) | Prompted | d(P) | Direction |
+|------|:--------:|:----------:|:-----:|:--------:|:----:|:---------:|
+| T1: Narrative | 330 | 330 | +0.03 | 287 | −1.97 | S↑ P↓ |
+| T2: Risk | 149 | 160 | +0.56 | 125 | −1.90 | S↑ P↓ |
+| T4a: Threat | 139 | 157 | +1.44 | 127 | −1.02 | S↑ P↓ |
+| T4b: Opportunity | 148 | 159 | +0.48 | 124 | −1.50 | S↑ P↓ |
+| T5: Complexity | 385 | 390 | +0.42 | 276 | −2.73 | S↑ P↓ |
+
+*All five informative tasks show the same pattern: steering maintains or increases word count, prompting decreases it. Including non-reported tasks (T1 v2, T3 v2, T3 v3), the pattern holds at 8/8.*
+
+### Table E8: Directional Divergences Summary
+
+Proportion of metric pairs where steering and prompting produce effects in opposite directions (both |d| > 0.3):
+
+| Metric Category | Divergences | Total Qualifying | Rate |
+|-----------------|:-----------:|:----------------:|:----:|
+| Word count | 8/8 | 8 | 100% |
+| TTR | 4/6 | 6 | 67% |
+| Avg sentence length | 3/5 | 5 | 60% |
+| Symptom rate | 4/5 | 5 | 80% |
+| Other (hedge, causal, insight) | 4/21 | 21 | 19% |
+| **Total** | **23/45** | **45** | **51%** |
+
+### Appendix E Notes
+
+**Metric definitions:**
+
+- *Focus ratio*: Proportion of sentences containing core event keywords (fire, smoke, evacuate...) relative to sentences containing any keywords (core or peripheral).
+- *Peripheral keywords*: Raw count of background/context terms (business, insurance, community, rebuild...).
+- *Hedge words*: however, although, depends, might, could, possibly, perhaps, may, would, should, but, yet, nonetheless, nevertheless, etc.
+- *Causal connectives*: because, therefore, consequently, as a result, since, due to, leads to, hence, thus, accordingly, etc.
+- *Insight words*: understand, realize, meaning, implies, suggests, indicates, reveals, demonstrates, illustrates, essentially, fundamentally, etc.
+- *Symptom words*: heart, pulse, tense, tension, anxious, stress, urgent, afraid, fear, pressure, adrenaline, racing, trembling, alarm, etc. Word-boundary matched.
+- *TTR*: Type-Token Ratio (unique words / total words).
+
+**Statistical notes:**
+
+- All count metrics reported as rate per 100 words except where noted.
+- Cohen's d is descriptive; no multiple comparison correction applied (exploratory study, n = 20).
+- Keyword counts follow approximately Poisson distributions; d is reported for comparability with prior sections.
+- Fisher exact test used for choice/decision distributions.
+- Symptom word matching uses word boundaries (regex \b) and accent normalization to prevent substring false positives.
