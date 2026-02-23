@@ -769,7 +769,7 @@
         // =============================================================================
         // API FUNCTIONS
         // =============================================================================
-        async function loadVectors() {
+        async function loadVectors(autoSelect = null) {
             try {
                 const res = await fetch('/v1/vectors');
                 const data = await res.json();
@@ -783,6 +783,17 @@
                     els.vectorSelect.appendChild(opt);
                 });
                 
+                // Auto-select a specific vector (e.g. after upload)
+                if (autoSelect) {
+                    const match = state.vectors.find(v => v.name === autoSelect);
+                    if (match) {
+                        els.vectorSelect.value = match.name;
+                        state.currentVector = match.name;
+                        updateVectorStats();
+                        addSystemMessage(`Active compound: ${match.title || match.name}`);
+                    }
+                }
+                
                 setStatus('online', `${state.vectors.length} vectors loaded`);
             } catch (e) {
                 setStatus('offline', 'Connection failed');
@@ -790,11 +801,11 @@
             }
         }
 
-        async function reloadVectors() {
+        async function reloadVectors(autoSelect = null) {
             try {
                 await fetch('/v1/vectors/reload', { method: 'POST' });
-                await loadVectors();
-                addSystemMessage('Vectors reloaded');
+                await loadVectors(autoSelect);
+                if (!autoSelect) addSystemMessage('Vectors reloaded');
             } catch (e) {
                 console.error('Reload failed:', e);
             }
@@ -804,6 +815,8 @@
             const formData = new FormData();
             formData.append('file', file);
             
+            addSystemMessage(`Uploading: ${file.name}...`);
+            
             try {
                 const res = await fetch('/v1/upload', {
                     method: 'POST',
@@ -811,14 +824,16 @@
                 });
                 
                 if (res.ok) {
-                    await reloadVectors();
-                    addSystemMessage(`Uploaded: ${file.name}`);
+                    const result = await res.json();
+                    const uploadedFilename = result.filename;
+                    await reloadVectors(uploadedFilename);
+                    addSystemMessage(`✅ Uploaded: ${file.name}`);
                 } else {
                     const err = await res.json();
-                    addSystemMessage(`Upload failed: ${err.detail}`);
+                    addSystemMessage(`❌ Upload failed: ${err.detail}`);
                 }
             } catch (e) {
-                addSystemMessage(`Upload error: ${e.message}`);
+                addSystemMessage(`❌ Upload error: ${e.message}`);
             }
         }
 

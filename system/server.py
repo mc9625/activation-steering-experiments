@@ -169,7 +169,13 @@ async def upload_vector(file: UploadFile = File(...)):
             try:
                 img = Image.open(filepath)
                 img.load()
-                if "NEURO_VECTOR" not in img.info:
+                
+                # Check both info and text for metadata (for iTXt chunk support)
+                has_vector = "NEURO_VECTOR" in img.info
+                if hasattr(img, "text") and "NEURO_VECTOR" in img.text:
+                    has_vector = True
+                    
+                if not has_vector:
                     os.remove(filepath)
                     raise HTTPException(400, "PNG does not contain embedded steering vector")
             except Exception as e:

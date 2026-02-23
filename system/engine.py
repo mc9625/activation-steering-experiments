@@ -195,47 +195,89 @@ class SteeringEngine:
                 img = Image.open(filepath)
                 img.load()
                 
-                if "NEURO_VECTOR" not in img.info:
+                def get_metadata(key):
+                    if key in img.info:
+                        return img.info[key]
+                    if hasattr(img, "text") and key in img.text:
+                        return img.text[key]
+                    return None
+                
+                b64_str = get_metadata("NEURO_VECTOR")
+                if not b64_str:
                     logger.debug(f"Skipping PNG without embedded vector: {filename}")
                     continue
                 
                 # Extract and decompress vector
-                b64_str = img.info["NEURO_VECTOR"]
                 compressed_data = base64.b64decode(b64_str)
                 
-                if img.info.get("NEURO_COMPRESSION") == "zlib":
+                # Decompress: respect explicit flag first, then probe automatically
+                if get_metadata("NEURO_COMPRESSION") == "zlib":
                     raw_data = zlib.decompress(compressed_data)
-                    buffer = io.BytesIO(raw_data)
                 else:
-                    buffer = io.BytesIO(compressed_data)
+                    try:
+                        raw_data = zlib.decompress(compressed_data)
+                    except zlib.error:
+                        raw_data = compressed_data
                 
-                vector = torch.load(buffer, map_location=self.device, weights_only=False)
+                # Deserialize: try pickle first (supports protocol 4), then torch.load
+                import pickle
+                data = None
+                try:
+                    data = pickle.loads(raw_data)
+                    logger.debug(f"PNG vector loaded via pickle: type={type(data)}")
+                except Exception as pickle_err:
+                    try:
+                        data = torch.load(io.BytesIO(raw_data), map_location=self.device, weights_only=False)
+                        logger.debug(f"PNG vector loaded via torch.load: type={type(data)}")
+                    except Exception as torch_err:
+                        logger.error(f"[{filename}] Could not deserialize vector via pickle ({pickle_err}) or torch ({torch_err}). Skipping — file may be corrupt or use an unsupported format.")
+                        continue
                 
-                if isinstance(vector, torch.Tensor):
-                    vector = vector.to(dtype=self.model.dtype, device=self.device)
-                    self.vectors[filename] = vector
-                    
-                    # Extract metadata from PNG
-                    metadata = {
-                        "layer": DEFAULT_STEERING_LAYER,
-                        "model": "unknown",
-                        "title": filename.replace(".png", "").replace("_", " ").title()
-                    }
-                    
-                    if "NEURO_LAYER" in img.info:
-                        try:
-                            metadata["layer"] = int(img.info["NEURO_LAYER"])
-                        except ValueError:
-                            pass
-                    
-                    if "NEURO_MODEL" in img.info:
-                        metadata["model"] = img.info["NEURO_MODEL"]
-                    
-                    if "NEURO_NAME" in img.info:
-                        metadata["title"] = img.info["NEURO_NAME"]
-                    
-                    self.vector_metadata[filename] = metadata
-                    logger.info(f"Loaded PNG: {filename} (layer={metadata['layer']}, norm={vector.norm().item():.4f})")
+                # Extract tensor and metadata from payload
+                embedded_meta = {}
+                if isinstance(data, dict):
+                    vector = data.get("vector", None)
+                    embedded_meta = data.get("metadata", {})
+                elif isinstance(data, torch.Tensor):
+                    vector = data
+                else:
+                    logger.error(f"Unexpected deserialized type: {type(data)}")
+                    continue
+                
+                if not isinstance(vector, torch.Tensor):
+                    logger.error(f"No valid tensor found in PNG payload for {filename}")
+                    continue
+                
+                vector = vector.to(dtype=self.model.dtype, device=self.device)
+                self.vectors[filename] = vector
+                
+                # Build metadata: prefer embedded dict, then fallback to PNG text tags
+                metadata = {
+                    "layer": embedded_meta.get("layer", DEFAULT_STEERING_LAYER),
+                    "model": embedded_meta.get("model", "unknown"),
+                    "title": embedded_meta.get("title", filename.replace(".png", "").replace("_", " ").title()),
+                    "normalized": embedded_meta.get("normalized", False),
+                    "stats": embedded_meta.get("stats", {}),
+                }
+                
+                # Override/supplement from PNG text tags if present
+                layer_str = get_metadata("NEURO_LAYER")
+                if layer_str is not None:
+                    try:
+                        metadata["layer"] = int(layer_str)
+                    except ValueError:
+                        pass
+                
+                model_str = get_metadata("NEURO_MODEL")
+                if model_str is not None:
+                    metadata["model"] = model_str
+                
+                name_str = get_metadata("NEURO_NAME")
+                if name_str is not None:
+                    metadata["title"] = name_str
+                
+                self.vector_metadata[filename] = metadata
+                logger.info(f"Loaded PNG: {filename} (title='{metadata['title']}', layer={metadata['layer']}, norm={vector.norm().item():.4f})")
                     
             except Exception as e:
                 logger.error(f"Failed to load PNG {filepath}: {e}")
@@ -282,18 +324,19 @@ class SteeringEngine:
             else:
                 hidden = output
             
-            # Ensure vector has right shape for broadcasting
+            # Apply steering to LAST TOKEN ONLY (matches experimental methodology)
             # hidden shape: (batch, seq_len, hidden_dim)
             # vector shape: (hidden_dim,)
             if vector.dim() == 1 and hidden.dim() == 3:
                 if vector.shape[0] == hidden.shape[-1]:
-                    # Reshape vector for broadcasting: (1, 1, hidden_dim)
-                    steering_vec = vector.unsqueeze(0).unsqueeze(0)
-                    modified_hidden = hidden + (steering_vec * intensity)
+                    # Clone to avoid in-place modification issues
+                    hidden = hidden.clone()
+                    steer = vector.to(dtype=hidden.dtype, device=hidden.device) * intensity
+                    hidden[:, -1, :] = hidden[:, -1, :] + steer
                     
                     if isinstance(output, tuple):
-                        return (modified_hidden,) + output[1:]
-                    return modified_hidden
+                        return (hidden,) + output[1:]
+                    return hidden
                 else:
                     logger.warning(f"Dimension mismatch: vector {vector.shape[0]} vs hidden {hidden.shape[-1]}")
             

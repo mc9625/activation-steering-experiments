@@ -79,13 +79,29 @@ class SteeringExtractor:
             return "mps"
         return "cpu"
     
-    def extract_activations(self, prompts: List[str], layer_idx: int) -> torch.Tensor:
-        """Extract mean activation of last token at specified layer."""
+    def extract_activations(self, prompts: List[str], layer_idx: int, pool_k: int = 8) -> torch.Tensor:
+        """Extract mean activation at specified layer, pooling last k tokens.
+        
+        Two critical details match the experimental methodology:
+        
+        1. CHAT TEMPLATE: Prompts are wrapped in chat template before extraction.
+           This ensures the contrastive direction is captured in the same
+           activation regime used during generation (chat mode).
+        
+        2. POOLED EXTRACTION: We average the last k token positions rather than
+           taking only the final token. This produces more stable contrastive
+           directions because semantic content is distributed across positions.
+           Using only the last token captures too much positional noise.
+           (Matches LayerTester._get_act in colab_notebooks/activation_steering_experiments.ipynb)
+        """
         activations = []
         
         def hook_fn(module, args, output):
             hidden = output[0] if isinstance(output, tuple) else output
-            activations.append(hidden[:, -1, :].detach().cpu().float())
+            k = min(hidden.shape[1], pool_k)
+            # Pool last k token positions → (batch, hidden_dim)
+            pooled = hidden[:, -k:, :].mean(dim=1)
+            activations.append(pooled.detach().cpu().float())
         
         # Get layer
         if hasattr(self.model, "model") and hasattr(self.model.model, "layers"):
@@ -97,7 +113,12 @@ class SteeringExtractor:
         
         try:
             for prompt in prompts:
-                inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+                # Wrap in chat template to match generation regime
+                messages = [{"role": "user", "content": prompt}]
+                formatted = self.tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=False
+                )
+                inputs = self.tokenizer(formatted, return_tensors="pt").to(self.device)
                 with torch.no_grad():
                     self.model(**inputs)
         finally:
