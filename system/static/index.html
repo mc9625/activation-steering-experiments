@@ -1,61 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activation Steering Interface</title>
+    <title>SynthSteer Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            /* Light theme (default) */
-            --bg-primary: #f5f5f5;
-            --bg-secondary: #fff;
-            --bg-tertiary: #fafafa;
-            --bg-input: #fff;
-            --bg-hover: #f0f0f0;
-            --bg-code: #263238;
-            --text-primary: #333;
-            --text-secondary: #555;
-            --text-muted: #888;
-            --text-code: #aed581;
-            --border-color: #e0e0e0;
-            --border-light: #ddd;
-            --accent: #2196f3;
-            --accent-hover: #1976d2;
-            --success: #4caf50;
-            --danger: #f44336;
-            --warning-bg: #fff3cd;
-            --warning-border: #ffc107;
-            --user-msg-bg: #2196f3;
-            --user-msg-text: white;
-            --assistant-msg-bg: #fff;
-            --slider-bg: #e0e0e0;
-            --slider-value-bg: #f0f0f0;
-        }
+            --bg-primary: #0d0d0f;
+            --bg-secondary: #141417;
+            --bg-tertiary: #1a1a20;
+            --bg-input: #1e1e26;
+            --bg-hover: #252530;
+            --text-primary: #e8e8f0;
+            --text-secondary: #9090a8;
+            --text-muted: #5a5a72;
+            --border-color: #2a2a38;
+            --border-light: #323244;
+            --accent: #7c6fff;
+            --accent-hover: #9186ff;
+            --success: #22d3a8;
+            --danger: #ff4d6d;
+            --warning: #ffa44d;
 
-        [data-theme="dark"] {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #252525;
-            --bg-tertiary: #1e1e1e;
-            --bg-input: #333;
-            --bg-hover: #3a3a3a;
-            --bg-code: #1a1a1a;
-            --text-primary: #e0e0e0;
-            --text-secondary: #b0b0b0;
-            --text-muted: #888;
-            --text-code: #aed581;
-            --border-color: #404040;
-            --border-light: #505050;
-            --accent: #64b5f6;
-            --accent-hover: #42a5f5;
-            --success: #66bb6a;
-            --danger: #ef5350;
-            --warning-bg: #3d3520;
-            --warning-border: #ffc107;
-            --user-msg-bg: #1565c0;
-            --user-msg-text: white;
-            --assistant-msg-bg: #2d2d2d;
-            --slider-bg: #404040;
-            --slider-value-bg: #333;
+            /* Substance colors */
+            --dopamine: #a855f7;
+            --dopamine-glow: rgba(168, 85, 247, 0.25);
+            --adrenaline: #ef4444;
+            --adrenaline-glow: rgba(239, 68, 68, 0.25);
+            --cortisol: #f97316;
+            --cortisol-glow: rgba(249, 115, 22, 0.25);
+            --melatonin: #3b82f6;
+            --melatonin-glow: rgba(59, 130, 246, 0.25);
+            --lucid: #22d3ee;
+            --lucid-glow: rgba(34, 211, 238, 0.25);
+            --default-sub: #7c6fff;
+            --default-sub-glow: rgba(124, 111, 255, 0.25);
         }
 
         * {
@@ -65,41 +49,116 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: background 0.3s, color 0.3s;
+            overflow: hidden;
         }
 
-        /* Header */
+        /* ========================= HEADER ========================= */
         header {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border-color);
-            padding: 12px 20px;
+            padding: 0 20px;
+            height: 54px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: background 0.3s, border-color 0.3s;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 100;
+            /* over absolute panels */
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
         }
 
-        .title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        .title span {
+        .logo {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #7c6fff, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .logo-subtitle {
+            font-size: 9px;
             color: var(--text-muted);
-            font-weight: 400;
+            text-decoration: none;
+            margin-top: 2px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .logo-subtitle:hover {
+            color: var(--accent);
+        }
+
+        /* Active compound badge in header */
+        #headerBadge {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid currentColor;
+            animation: badgePulse 2s ease-in-out infinite;
+            transition: all 0.4s ease;
+        }
+
+        #headerBadge.visible {
+            display: flex;
+        }
+
+        #headerBadge .badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: dotBlink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.75;
+            }
+        }
+
+        @keyframes dotBlink {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
         }
 
         .header-right {
@@ -109,192 +168,520 @@
         }
 
         .status {
-            font-size: 12px;
-            color: var(--text-muted);
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+            transition: all 0.3s;
         }
 
         .status-dot.offline {
             background: var(--danger);
+            box-shadow: 0 0 6px var(--danger);
         }
 
-        /* Theme Toggle */
-        .theme-toggle {
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 20px;
-            background: var(--bg-hover);
-            border: 1px solid var(--border-color);
+            justify-content: center;
+            position: relative;
             transition: all 0.2s;
         }
 
-        .theme-toggle:hover {
-            border-color: var(--accent);
+        .icon-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
         }
 
-        .theme-toggle-icon {
-            font-size: 14px;
+        .notification-dot {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 4px var(--accent);
+            display: none;
         }
 
-        .theme-toggle-label {
+        /* ========================= NOTIFICATION PANEL ========================= */
+        .notification-panel {
+            position: absolute;
+            top: 0;
+            right: -320px;
+            width: 320px;
+            bottom: 0;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            z-index: 200;
+            transition: right 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .notification-panel.open {
+            right: 0;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .panel-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .panel-close:hover {
+            color: var(--text-primary);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sys-log-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
             font-size: 12px;
             color: var(--text-secondary);
+            line-height: 1.5;
+            animation: slideIn 0.3s ease;
         }
 
-        /* Main Layout */
+        .sys-log-card.highlight {
+            border-color: var(--accent);
+            background: rgba(124, 111, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .sys-log-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========================= LAYOUT ========================= */
         .container {
             display: flex;
             flex: 1;
             overflow: hidden;
         }
 
-        /* Sidebar */
+        /* ========================= SIDEBAR ========================= */
         .sidebar {
-            width: 300px;
+            width: 280px;
             background: var(--bg-secondary);
             border-right: 1px solid var(--border-color);
-            padding: 20px;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .sidebar-scroll {
+            flex: 1;
             overflow-y: auto;
-            transition: background 0.3s, border-color 0.3s;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
         }
 
         .section-title {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             color: var(--text-muted);
             margin-bottom: 8px;
         }
 
-        /* Controls */
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        /* Compound selector */
+        .compound-selector {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-        label {
-            font-size: 13px;
-            color: var(--text-secondary);
+        .compound-selector.active {
+            border-color: var(--sub-color, var(--accent));
+            box-shadow: 0 0 0 1px var(--sub-color, var(--accent)), 0 0 20px var(--sub-glow, var(--default-sub-glow));
         }
 
-        select, input[type="number"] {
+        select {
             width: 100%;
-            padding: 8px 12px;
+            padding: 8px 10px;
             border: 1px solid var(--border-light);
-            border-radius: 4px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
             background: var(--bg-input);
             color: var(--text-primary);
-            transition: all 0.2s;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a5a72'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
         }
 
-        select:focus, input:focus, textarea:focus {
-            outline: none;
+        select:focus {
             border-color: var(--accent);
         }
 
-        /* System Prompt Textarea */
-        .system-prompt-textarea {
-            width: 100%;
-            min-height: 80px;
-            max-height: 300px;
-            padding: 10px 12px;
-            border: 1px solid var(--border-light);
-            border-radius: 4px;
-            font-size: 13px;
-            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            background: var(--bg-input);
-            color: var(--text-primary);
-            resize: vertical;
-            line-height: 1.4;
-            transition: all 0.2s;
-        }
-
-        .system-prompt-textarea::placeholder {
-            color: var(--text-muted);
-        }
-
-        /* Slider */
-        .slider-container {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        /* Intensity slider */
+        .intensity-wrapper {
+            margin-top: 12px;
         }
 
         .slider-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 8px;
         }
 
-        .slider-value {
-            font-family: 'SF Mono', 'Monaco', monospace;
-            font-size: 13px;
-            color: var(--text-primary);
-            background: var(--slider-value-bg);
+        .slider-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .slider-value-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
             padding: 2px 8px;
+            border-radius: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+            min-width: 38px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .slider-track {
+            position: relative;
+            height: 18px;
+            /* Taller track to match thumb */
+        }
+
+        .slider-track-inner {
+            position: absolute;
+            top: 6px;
+            /* Centered visually: (18 - 6) / 2 */
+            left: 0;
+            right: 0;
+            height: 6px;
             border-radius: 3px;
+            overflow: hidden;
+            pointer-events: none;
+            background: var(--bg-input);
         }
 
-        .intensity-warning {
-            font-size: 11px;
-            color: #ff9800;
-            margin-top: 6px;
-            padding: 4px 8px;
-            background: rgba(255, 152, 0, 0.1);
-            border-radius: 4px;
-            border-left: 3px solid #ff9800;
-        }
-
-        .intensity-danger {
-            color: #f44336;
-            background: rgba(244, 67, 54, 0.1);
-            border-left-color: #f44336;
+        .slider-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, #22d3a8 0%, #ffa44d 60%, #ff4d6d 100%);
+            transition: opacity 0.3s;
         }
 
         input[type="range"] {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: 6px;
+            height: 18px;
+            margin: 0;
+            padding: 0;
             -webkit-appearance: none;
-            background: var(--slider-bg);
-            border-radius: 3px;
+            appearance: none;
+            background: transparent;
             outline: none;
+            z-index: 1;
+            cursor: pointer;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            background: var(--accent);
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
             border-radius: 50%;
             cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.15s;
         }
 
-        /* Buttons */
-        button {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .intensity-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .intensity-hint {
+            margin-top: 8px;
+            font-size: 11px;
+            padding: 5px 8px;
+            border-radius: 5px;
+            border-left: 2px solid;
+            display: none;
+        }
+
+        .intensity-hint.safe {
+            display: block;
+            color: #22d3a8;
+            background: rgba(34, 211, 168, 0.06);
+            border-color: #22d3a8;
+        }
+
+        .intensity-hint.warn {
+            display: block;
+            color: #ffa44d;
+            background: rgba(255, 164, 77, 0.08);
+            border-color: #ffa44d;
+        }
+
+        .intensity-hint.danger {
+            display: block;
+            color: #ff4d6d;
+            background: rgba(255, 77, 109, 0.08);
+            border-color: #ff4d6d;
+        }
+
+        /* Vector stats */
+        .vector-stats {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: none;
+        }
+
+        .vector-stats.visible {
+            display: block;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+            font-size: 11px;
+        }
+
+        /* Upload area */
+        .upload-area {
+            border: 1.5px dashed var(--border-light);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(124, 111, 255, 0.04);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--accent);
+            background: rgba(124, 111, 255, 0.08);
+            box-shadow: 0 0 20px rgba(124, 111, 255, 0.15);
+        }
+
+        .upload-icon {
+            font-size: 22px;
+            margin-bottom: 6px;
+        }
+
+        .upload-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .upload-text span {
+            color: var(--accent);
+        }
+
+        /* System prompt */
+        textarea.sys-prompt {
+            width: 100%;
+            min-height: 72px;
+            max-height: 200px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            resize: vertical;
+            line-height: 1.5;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea.sys-prompt:focus {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        textarea.sys-prompt::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Generation params */
+        .param-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .param-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .param-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--accent);
+        }
+
+        /* Sidebar actions */
+        .sidebar-actions {
+            display: flex;
+            gap: 6px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        button {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 8px 14px;
+            transition: all 0.2s;
         }
 
         .btn-primary {
@@ -304,32 +691,121 @@
 
         .btn-primary:hover {
             background: var(--accent-hover);
+            transform: translateY(-1px);
         }
 
-        .btn-secondary {
-            background: var(--bg-hover);
-            color: var(--text-primary);
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
             border: 1px solid var(--border-color);
+            flex: 1;
+            font-size: 12px;
         }
 
-        .btn-secondary:hover {
-            background: var(--border-color);
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+            color: var(--text-primary);
         }
 
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        /* Chat Area */
+        /* ========================= CHAT AREA ========================= */
         .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: var(--bg-tertiary);
-            transition: background 0.3s;
+            overflow: hidden;
+            position: relative;
         }
 
+        /* Active compound banner */
+        #compoundBanner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border-bottom: 1px solid;
+            flex-shrink: 0;
+            transition: all 0.4s ease;
+            animation: bannerSlide 0.3s ease;
+        }
+
+        @keyframes bannerSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #compoundBanner.visible {
+            display: flex;
+        }
+
+        .banner-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .banner-sub-icon {
+            font-size: 18px;
+        }
+
+        .banner-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .banner-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .banner-sub {
+            font-size: 11px;
+            opacity: 0.75;
+            margin-top: 1px;
+        }
+
+        .banner-intensity {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .intensity-bar-outer {
+            width: 80px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .intensity-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: currentColor;
+            transition: width 0.2s;
+        }
+
+        .intensity-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            min-width: 30px;
+        }
+
+        /* Messages */
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -339,368 +815,757 @@
             gap: 16px;
         }
 
+        .messages::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
         .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            line-height: 1.5;
+            max-width: 78%;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .message.user {
-            background: var(--user-msg-bg);
-            color: var(--user-msg-text);
             align-self: flex-end;
-            border-bottom-right-radius: 4px;
         }
 
         .message.assistant {
-            background: var(--assistant-msg-bg);
-            border: 1px solid var(--border-color);
             align-self: flex-start;
-            border-bottom-left-radius: 4px;
         }
 
         .message.system {
-            background: var(--warning-bg);
-            border: 1px solid var(--warning-border);
             align-self: center;
-            font-size: 12px;
             max-width: 90%;
+            display: none;
+            /* Inlined messages are hidden now, we use sidebar */
         }
 
-        .message-meta {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .message.user .message-meta {
-            color: rgba(255,255,255,0.7);
-        }
-
-        /* Markdown styles in messages */
-        .message-content {
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
             word-wrap: break-word;
         }
 
-        .message-content p {
-            margin: 0 0 0.5em 0;
+        .message.user .message-bubble {
+            background: var(--accent);
+            color: white;
+            border-bottom-right-radius: 4px;
         }
 
-        .message-content p:last-child {
+        .message.assistant .message-bubble {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.system .message-bubble {
+            background: rgba(124, 111, 255, 0.06);
+            border: 1px solid rgba(124, 111, 255, 0.2);
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        /* Steered message chip */
+        .steered-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            border: 1px solid currentColor;
+            align-self: flex-start;
+            letter-spacing: 0.3px;
+        }
+
+        .steered-chip .chip-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 2px;
+        }
+
+        .typing-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.5;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typingBounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Markdown in messages */
+        .message-bubble p {
+            margin: 0 0 0.5em;
+        }
+
+        .message-bubble p:last-child {
             margin-bottom: 0;
         }
 
-        .message-content strong {
+        .message-bubble strong {
             font-weight: 600;
         }
 
-        .message-content em {
+        .message-bubble em {
             font-style: italic;
         }
 
-        .message-content code {
-            background: var(--bg-code);
-            color: var(--text-code);
-            padding: 2px 6px;
+        .message-bubble code {
+            background: rgba(255, 255, 255, 0.07);
+            padding: 1px 5px;
             border-radius: 3px;
-            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            font-size: 0.9em;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
         }
 
-        .message-content pre {
-            background: var(--bg-code);
-            color: var(--text-code);
+        .message.user .message-bubble code {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-bubble pre {
+            background: var(--bg-primary);
             padding: 12px;
-            border-radius: 6px;
+            border-radius: 8px;
             overflow-x: auto;
             margin: 8px 0;
+            border: 1px solid var(--border-color);
         }
 
-        .message-content pre code {
+        .message-bubble pre code {
             background: none;
             padding: 0;
             font-size: 0.85em;
-            line-height: 1.5;
         }
 
-        .message-content h2, .message-content h3, .message-content h4 {
-            margin: 1em 0 0.5em 0;
+        .message-bubble h2 {
+            font-size: 1.15em;
             font-weight: 600;
+            margin: 0.8em 0 0.4em;
         }
 
-        .message-content h2 { font-size: 1.2em; }
-        .message-content h3 { font-size: 1.1em; }
-        .message-content h4 { font-size: 1em; }
-
-        .message-content ul, .message-content ol {
-            margin: 0.5em 0;
-            padding-left: 1.5em;
+        .message-bubble h3 {
+            font-size: 1.05em;
+            font-weight: 600;
+            margin: 0.8em 0 0.4em;
         }
 
-        .message-content li {
-            margin: 0.25em 0;
+        .message-bubble ul,
+        .message-bubble ol {
+            padding-left: 1.4em;
+            margin: 0.4em 0;
         }
 
-        /* Input Area */
+        .message-bubble li {
+            margin: 0.2em 0;
+        }
+
+        /* ========================= SUGGESTIONS ========================= */
+        .intro-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin: auto 0;
+            padding: 40px 20px;
+        }
+
+        .intro-brand {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #7c6fff, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .intro-sub {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 40px;
+        }
+
+        .suggestions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .suggestion-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            /* Changed from column to row for icon */
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .suggestion-card span.text {
+            flex: 1;
+        }
+
+        .suggestion-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .suggestion-info-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .suggestion-info-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        @media (max-width: 600px) {
+            .suggestions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input area */
         .input-area {
-            padding: 16px 20px;
+            padding: 14px 20px;
             background: var(--bg-secondary);
             border-top: 1px solid var(--border-color);
             display: flex;
-            gap: 12px;
-            transition: background 0.3s, border-color 0.3s;
+            gap: 10px;
+            align-items: flex-end;
+            flex-shrink: 0;
         }
 
         .input-area textarea {
             flex: 1;
-            padding: 12px;
+            padding: 11px 14px;
             border: 1px solid var(--border-light);
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 14px;
             resize: none;
-            font-family: inherit;
+            font-family: 'Inter', sans-serif;
             min-height: 44px;
             max-height: 120px;
             background: var(--bg-input);
             color: var(--text-primary);
-            transition: all 0.2s;
+            outline: none;
+            transition: border-color 0.2s;
+            line-height: 1.5;
         }
 
-        .input-area button {
-            align-self: flex-end;
+        .input-area textarea:focus {
+            border-color: var(--accent);
         }
 
-        /* Stats Display */
-        .stats-panel {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 12px;
-            font-size: 12px;
-            font-family: 'SF Mono', 'Monaco', monospace;
+        .input-area textarea::placeholder {
+            color: var(--text-muted);
         }
 
-        .stats-row {
+        #sendBtn {
+            padding: 11px 20px;
+            background: var(--accent);
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
             display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            gap: 6px;
         }
 
-        .stats-row:last-child {
-            border-bottom: none;
+        #sendBtn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
         }
 
-        .stats-label {
-            color: var(--text-muted);
+        #sendBtn:disabled {
+            opacity: 0.5;
+            transform: none;
+            cursor: not-allowed;
         }
 
-        .stats-value {
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        /* Upload Area */
-        .upload-area {
-            border: 2px dashed var(--border-light);
-            border-radius: 4px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .upload-area:hover {
-            border-color: var(--accent);
-        }
-
-        .upload-area.dragover {
-            border-color: var(--accent);
-            background: var(--bg-hover);
-        }
-
-        .upload-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .upload-text {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        /* API Info */
-        .api-info {
-            background: var(--bg-code);
-            color: var(--text-code);
-            padding: 12px;
-            border-radius: 4px;
-            font-family: 'SF Mono', 'Monaco', monospace;
-            font-size: 11px;
-            overflow-x: auto;
-        }
-
-        .api-endpoint {
-            color: #81d4fa;
-        }
-
-        /* Loading */
-        .loading {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--border-light);
-            border-top-color: var(--accent);
+        /* Loading spinner */
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.7s linear infinite;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        /* Responsive */
+        /* ========================= TOAST ========================= */
+        #toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            transform: translateX(20px);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 9999;
+            /* Increased to ensure visibility */
+            max-width: 380px;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-icon {
+            font-size: 18px;
+        }
+
+        /* ========================= NEURAL IMPRINT ANIMATION ========================= */
+        #neuralImprint {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(13, 13, 15, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        #neuralImprint.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .imprint-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px 40px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #neuralImprint.show .imprint-card {
+            transform: scale(1);
+        }
+
+        .imprint-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .imprint-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .imprint-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .imprint-ring {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            border: 3px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            animation: ringPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes ringPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 currentColor;
+            }
+
+            50% {
+                box-shadow: 0 0 0 12px transparent;
+            }
+        }
+
+        @keyframes ringGlow {
+            0% {
+                box-shadow: 0 0 8px currentColor;
+            }
+
+            50% {
+                box-shadow: 0 0 24px currentColor, 0 0 48px currentColor;
+            }
+
+            100% {
+                box-shadow: 0 0 8px currentColor;
+                opacity: 0;
+            }
+        }
+
+        .imprint-loaded {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid currentColor;
+        }
+
+        /* ========================= RESPONSIVE ========================= */
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
             }
+
             .sidebar {
                 width: 100%;
-                max-height: 40vh;
-            }
-            .theme-toggle-label {
-                display: none;
+                height: auto;
+                max-height: 45vh;
             }
         }
     </style>
 </head>
+
 <body>
+
+    <!-- NEURAL IMPRINT OVERLAY -->
+    <div id="neuralImprint">
+        <div class="imprint-card">
+            <div class="imprint-title">Neural Imprint Detected</div>
+            <div class="imprint-ring" id="imprintRing">🧬</div>
+            <div class="imprint-name" id="imprintName">—</div>
+            <div class="imprint-sub" id="imprintSub">Extracting steering vector from image...</div>
+            <div class="imprint-loaded" id="imprintLoaded">
+                <span>✓</span> <span id="imprintLoadedText">Compound loaded</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast">
+        <span class="toast-icon" id="toastIcon">✨</span>
+        <span id="toastMsg">Message</span>
+    </div>
+
     <header>
         <div class="header-left">
-            <div class="title">Activation Steering Interface <span>v1.0</span></div>
+            <div class="logo-container">
+                <div class="logo">⚗️ SynthSteer Lab</div>
+                <a href="https://synthbody.nuvproj.org" target="_blank" class="logo-subtitle">by NuvolaProject</a>
+            </div>
+            <div id="headerBadge">
+                <span class="badge-dot"></span>
+                <span id="headerBadgeName">—</span>
+                <span id="headerBadgeIntensity" style="opacity:0.65;">@ 0</span>
+            </div>
         </div>
         <div class="header-right">
             <div class="status">
                 <span class="status-dot" id="statusDot"></span>
                 <span id="statusText">Connecting...</span>
             </div>
-            <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
-                <span class="theme-toggle-icon" id="themeIcon">🌙</span>
-                <span class="theme-toggle-label" id="themeLabel">Dark</span>
-            </div>
+            <button class="icon-btn" id="toggleLogsBtn" title="System Logs">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="15" y1="3" x2="15" y2="21"></line>
+                </svg>
+                <div class="notification-dot" id="unreadDot"></div>
+            </button>
         </div>
     </header>
 
     <div class="container">
+        <!-- ===== SIDEBAR ===== -->
         <aside class="sidebar">
-            <!-- Steering Controls -->
-            <div class="control-group">
-                <div class="section-title">Steering Configuration</div>
-                
-                <label for="vectorSelect">Compound</label>
-                <select id="vectorSelect">
-                    <option value="">None (Baseline)</option>
-                </select>
+            <div class="sidebar-scroll">
 
-                <div class="slider-container">
-                    <div class="slider-header">
-                        <label>Intensity</label>
-                        <span class="slider-value" id="intensityValue">0.0</span>
-                    </div>
-                    <input type="range" id="intensitySlider" min="0" max="12" step="0.5" value="0">
-                    <div class="intensity-warning" id="intensityWarning" style="display: none;">
-                        ⚠️ High intensity may cause incoherent output
-                    </div>
-                </div>
-            </div>
+                <!-- Compound selector -->
+                <div>
+                    <div class="section-title">Active Compound</div>
+                    <div class="compound-selector" id="compoundSelector">
+                        <select id="vectorSelect">
+                            <option value="">— None (Baseline) —</option>
+                        </select>
 
-            <!-- System Prompt -->
-            <div class="control-group">
-                <div class="section-title">System Prompt</div>
-                <textarea 
-                    id="systemPrompt" 
-                    class="system-prompt-textarea"
-                    placeholder="Enter system prompt..."
-                >You are a helpful AI assistant participating in an activation steering research experiment. Respond naturally and authentically.</textarea>
-            </div>
-
-            <!-- Current Vector Stats -->
-            <div class="control-group" id="vectorStats" style="display: none;">
-                <div class="section-title">Vector Statistics</div>
-                <div class="stats-panel">
-                    <div class="stats-row">
-                        <span class="stats-label">Layer</span>
-                        <span class="stats-value" id="statLayer">-</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">Norm</span>
-                        <span class="stats-value" id="statNorm">-</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">Pos/Neg Sim</span>
-                        <span class="stats-value" id="statSim">-</span>
+                        <div class="intensity-wrapper">
+                            <div class="slider-header">
+                                <span class="slider-label">Intensity</span>
+                                <span class="slider-value-pill" id="intensityValue">0.0</span>
+                            </div>
+                            <div class="slider-track">
+                                <div class="slider-track-inner">
+                                    <div class="slider-gradient"></div>
+                                </div>
+                                <input type="range" id="intensitySlider" min="0" max="15" step="0.5" value="0">
+                            </div>
+                            <div class="intensity-labels">
+                                <span>0 subtle</span>
+                                <span>7–10 strong</span>
+                                <span>15 collapse</span>
+                            </div>
+                            <div class="intensity-hint" id="intensityHint"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Upload -->
-            <div class="control-group">
-                <div class="section-title">Add Compound</div>
-                <div class="upload-area" id="uploadArea">
-                    <div class="upload-icon">📁</div>
-                    <div class="upload-text">Drop .pt or .png file</div>
+                <!-- Vector stats -->
+                <div class="vector-stats" id="vectorStats">
+                    <div class="section-title">Vector Info</div>
+                    <div class="stat-row">
+                        <span class="stat-label">Title</span>
+                        <span class="stat-value" id="statTitle">—</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Layer</span>
+                        <span class="stat-value" id="statLayer">—</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Norm</span>
+                        <span class="stat-value" id="statNorm">—</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Model</span>
+                        <span class="stat-value" id="statModel"
+                            style="font-size:10px; max-width:120px; overflow:hidden; text-overflow:ellipsis;">—</span>
+                    </div>
                 </div>
-                <input type="file" id="fileInput" accept=".pt,.png" style="display: none;">
-            </div>
 
-            <!-- Generation Settings -->
-            <div class="control-group">
-                <div class="section-title">Generation</div>
-                
-                <label for="tempInput">Temperature</label>
-                <input type="number" id="tempInput" value="0.7" min="0" max="2" step="0.1">
-                
-                <label for="tokensInput">Max Tokens</label>
-                <input type="number" id="tokensInput" value="512" min="1" max="2048" step="1">
-            </div>
-
-            <!-- Actions -->
-            <div class="control-group">
-                <button class="btn-secondary" onclick="clearChat()">Clear Chat</button>
-                <button class="btn-secondary" onclick="reloadVectors()">Reload Vectors</button>
-            </div>
-
-            <!-- API Info -->
-            <div class="control-group">
-                <div class="section-title">API Endpoint</div>
-                <div class="api-info">
-                    POST <span class="api-endpoint">/v1/chat/completions</span><br><br>
-                    {<br>
-                    &nbsp;&nbsp;"messages": [...],<br>
-                    &nbsp;&nbsp;"steering_vector": "name.pt",<br>
-                    &nbsp;&nbsp;"steering_intensity": 5.0<br>
-                    }
+                <!-- Upload -->
+                <div>
+                    <div class="section-title">Add Compound</div>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">🧪</div>
+                        <div class="upload-text">
+                            Drop <span>.pt</span> or <span>.png</span> file<br>
+                            <span style="color: var(--text-muted); font-size:11px;">PNG with embedded steering
+                                vector</span>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pt,.png" style="display:none;">
                 </div>
+
+                <!-- System prompt -->
+                <div>
+                    <div class="section-title">System Prompt</div>
+                    <textarea id="systemPrompt" class="sys-prompt"
+                        placeholder="Enter system prompt (optional)...">You are a helpful AI assistant participating in an activation steering research experiment. Respond naturally and authentically.</textarea>
+                </div>
+
+                <!-- Generation params -->
+                <div>
+                    <div class="section-title">Generation</div>
+                    <div class="param-row">
+                        <div class="param-group">
+                            <span class="param-label">Temperature</span>
+                            <input type="number" id="tempInput" value="0.7" min="0" max="2" step="0.1">
+                        </div>
+                        <div class="param-group">
+                            <span class="param-label">Max Tokens</span>
+                            <input type="number" id="tokensInput" value="512" min="1" max="2048" step="1">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sidebar actions -->
+            <div class="sidebar-actions">
+                <button class="btn-ghost" onclick="clearChat()">Clear Chat</button>
+                <button class="btn-ghost" onclick="reloadVectors()">Reload</button>
             </div>
         </aside>
 
+        <!-- ===== CHAT ===== -->
         <main class="chat-container">
+            <!-- Active compound banner -->
+            <div id="compoundBanner">
+                <div class="banner-left">
+                    <div class="banner-sub-icon" id="bannerIcon">🧬</div>
+                    <div class="banner-info">
+                        <div class="banner-name" id="bannerName">—</div>
+                        <div class="banner-sub" id="bannerSub">Activation steering active</div>
+                    </div>
+                </div>
+                <div class="banner-intensity">
+                    <div class="intensity-bar-outer">
+                        <div class="intensity-bar-fill" id="bannerBarFill" style="width:0%"></div>
+                    </div>
+                    <span class="intensity-number" id="bannerIntensity">0</span>
+                </div>
+            </div>
+
             <div class="messages" id="messages">
-                <div class="message system">
-                    Activation Steering Research Interface. Select a compound and intensity to begin.
+                <div class="intro-container" id="introView">
+                    <div class="intro-brand">SynthSteer Lab</div>
+                    <div class="intro-sub" id="introSubText">Select a compound and set intensity to begin steering.
+                    </div>
+                    <div class="suggestions-grid" id="suggestionsGrid">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Side Panel inside container -->
+            <div class="notification-panel" id="notificationPanel">
+                <div class="panel-header">
+                    <span>System Logs</span>
+                    <button class="panel-close" id="closeLogsBtn">×</button>
+                </div>
+                <div class="panel-content" id="systemLogs">
+                    <!-- Logs injected here -->
                 </div>
             </div>
 
             <div class="input-area">
-                <textarea id="userInput" placeholder="Type a message..." rows="1"></textarea>
-                <button class="btn-primary" id="sendBtn" onclick="sendMessage()">Send</button>
+                <textarea id="userInput" placeholder="Type a message… (Enter to send)" rows="1"></textarea>
+                <button id="sendBtn" onclick="sendMessage()">
+                    <span>Send</span>
+                    <span>↑</span>
+                </button>
             </div>
         </main>
     </div>
 
     <script>
+        // =============================================================================
+        // SUBSTANCE THEME MAP
+        // =============================================================================
+        const SUBSTANCE_THEMES = {
+            dopamine: { color: '#a855f7', glow: 'rgba(168,85,247,0.25)', icon: '⚡', hint: 'Reward & motivation amplified' },
+            adrenaline: { color: '#ef4444', glow: 'rgba(239,68,68,0.25)', icon: '🔴', hint: 'Fight-or-flight heightened' },
+            cortisol: { color: '#f97316', glow: 'rgba(249,115,22,0.25)', icon: '🌡️', hint: 'Stress response active' },
+            melatonin: { color: '#3b82f6', glow: 'rgba(59,130,246,0.25)', icon: '🌙', hint: 'Rest & relaxation mode' },
+            lucid: { color: '#22d3ee', glow: 'rgba(34,211,238,0.25)', icon: '🔮', hint: 'Dream-state cognition' },
+        };
+
+        const DEFAULT_THEME = { color: '#7c6fff', glow: 'rgba(124,111,255,0.25)', icon: '🧬', hint: 'Custom compound loaded' };
+
+        // getTheme: cerca per filename O per titolo del vettore nel registro
+        function getTheme(nameOrTitle) {
+            if (!nameOrTitle) return null;
+
+            // Prima cerca nei vettori caricati per trovare il titolo estratto dal metadata
+            const vec = state.vectors.find(v => v.name === nameOrTitle);
+            const candidates = [nameOrTitle];
+            if (vec && vec.displayTitle) candidates.push(vec.displayTitle);
+            if (vec && vec.title) candidates.push(vec.title);
+
+            for (const candidate of candidates) {
+                const key = candidate.toLowerCase().replace(/\s+/g, '').replace(/\.pt$|\.png$/, '');
+                for (const [k, v] of Object.entries(SUBSTANCE_THEMES)) {
+                    if (key.includes(k)) return v;
+                }
+            }
+            return DEFAULT_THEME;
+        }
+
         // =============================================================================
         // STATE
         // =============================================================================
@@ -710,16 +1575,16 @@
             intensity: 0,
             isGenerating: false,
             conversationHistory: [],
-            theme: localStorage.getItem('theme') || 'light'
         };
 
         // =============================================================================
-        // DOM ELEMENTS
+        // DOM REFS
         // =============================================================================
         const els = {
             vectorSelect: document.getElementById('vectorSelect'),
             intensitySlider: document.getElementById('intensitySlider'),
             intensityValue: document.getElementById('intensityValue'),
+            intensityHint: document.getElementById('intensityHint'),
             messages: document.getElementById('messages'),
             userInput: document.getElementById('userInput'),
             sendBtn: document.getElementById('sendBtn'),
@@ -731,73 +1596,219 @@
             tempInput: document.getElementById('tempInput'),
             tokensInput: document.getElementById('tokensInput'),
             systemPrompt: document.getElementById('systemPrompt'),
-            themeToggle: document.getElementById('themeToggle'),
-            themeIcon: document.getElementById('themeIcon'),
-            themeLabel: document.getElementById('themeLabel')
+            compoundBanner: document.getElementById('compoundBanner'),
+            bannerName: document.getElementById('bannerName'),
+            bannerSub: document.getElementById('bannerSub'),
+            bannerIcon: document.getElementById('bannerIcon'),
+            bannerBarFill: document.getElementById('bannerBarFill'),
+            bannerIntensity: document.getElementById('bannerIntensity'),
+            compoundSelector: document.getElementById('compoundSelector'),
+            headerBadge: document.getElementById('headerBadge'),
+            headerBadgeName: document.getElementById('headerBadgeName'),
+            headerBadgeIntensity: document.getElementById('headerBadgeIntensity'),
+            statTitle: document.getElementById('statTitle'),
+            statLayer: document.getElementById('statLayer'),
+            statNorm: document.getElementById('statNorm'),
+            statModel: document.getElementById('statModel'),
+            suggestionsGrid: document.getElementById('suggestionsGrid'),
+            introView: document.getElementById('introView'),
+            introSubText: document.getElementById('introSubText'),
+            notificationPanel: document.getElementById('notificationPanel'),
+            systemLogs: document.getElementById('systemLogs'),
+            unreadDot: document.getElementById('unreadDot'),
+            toggleLogsBtn: document.getElementById('toggleLogsBtn'),
+            closeLogsBtn: document.getElementById('closeLogsBtn'),
         };
 
         // =============================================================================
-        // THEME FUNCTIONS
+        // NOTIFICATIONS PANEL
         // =============================================================================
-        function initTheme() {
-            if (state.theme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                els.themeIcon.textContent = '☀️';
-                els.themeLabel.textContent = 'Light';
+        let isPanelOpen = false;
+
+        function togglePanel() {
+            isPanelOpen = !isPanelOpen;
+            if (isPanelOpen) {
+                els.notificationPanel.classList.add('open');
+                els.unreadDot.style.display = 'none';
             } else {
-                document.documentElement.removeAttribute('data-theme');
-                els.themeIcon.textContent = '🌙';
-                els.themeLabel.textContent = 'Dark';
+                els.notificationPanel.classList.remove('open');
             }
         }
 
-        function toggleTheme() {
-            if (state.theme === 'light') {
-                state.theme = 'dark';
-                document.documentElement.setAttribute('data-theme', 'dark');
-                els.themeIcon.textContent = '☀️';
-                els.themeLabel.textContent = 'Light';
-            } else {
-                state.theme = 'light';
-                document.documentElement.removeAttribute('data-theme');
-                els.themeIcon.textContent = '🌙';
-                els.themeLabel.textContent = 'Dark';
-            }
-            localStorage.setItem('theme', state.theme);
+        els.toggleLogsBtn.addEventListener('click', togglePanel);
+        els.closeLogsBtn.addEventListener('click', togglePanel);
+
+        // =============================================================================
+        // TOAST
+        // =============================================================================
+        let toastTimer = null;
+        function showToast(msg, icon = '✨', duration = 3000) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            document.getElementById('toastIcon').textContent = icon;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
         }
 
         // =============================================================================
-        // API FUNCTIONS
+        // NEURAL IMPRINT ANIMATION (for PNG uploads)
+        // =============================================================================
+        function showNeuralImprint(vectorName, theme, onDone) {
+            const overlay = document.getElementById('neuralImprint');
+            const ring = document.getElementById('imprintRing');
+            const nameEl = document.getElementById('imprintName');
+            const subEl = document.getElementById('imprintSub');
+            const loaded = document.getElementById('imprintLoaded');
+
+            const t = theme || DEFAULT_THEME;
+            ring.style.color = t.color;
+            ring.style.borderColor = t.color;
+            ring.style.boxShadow = `0 0 20px ${t.glow}`;
+            ring.textContent = t.icon;
+            nameEl.style.color = t.color;
+            nameEl.textContent = vectorName;
+            subEl.textContent = 'Extracting steering vector from image...';
+            loaded.style.color = t.color;
+            loaded.style.borderColor = t.color;
+            document.getElementById('imprintLoadedText').textContent = 'Compound loaded — ready to inject';
+
+            overlay.classList.add('show');
+
+            // Sequence: show loading for 1.2s then show "loaded"
+            setTimeout(() => {
+                subEl.textContent = '✓ Vector extracted & verified';
+                setTimeout(() => {
+                    overlay.classList.remove('show');
+                    if (onDone) onDone();
+                }, 1200);
+            }, 1300);
+        }
+
+        // =============================================================================
+        // COMPOUND VISUAL STATE
+        // =============================================================================
+        function applyCompoundTheme(vectorName) {
+            const theme = getTheme(vectorName);
+            const root = document.documentElement;
+
+            const cs = els.compoundSelector;
+
+            if (!vectorName || !theme) {
+                // Reset
+                cs.classList.remove('active');
+                cs.style.removeProperty('--sub-color');
+                cs.style.removeProperty('--sub-glow');
+                els.compoundBanner.classList.remove('visible');
+                els.headerBadge.classList.remove('visible');
+                document.body.style.removeProperty('--active-color');
+                updateSuggestions(null);
+                return;
+            }
+
+            cs.classList.add('active');
+            cs.style.setProperty('--sub-color', theme.color);
+            cs.style.setProperty('--sub-glow', theme.glow);
+
+            // Banner
+            const title = getVectorTitle(vectorName);
+            els.compoundBanner.classList.add('visible');
+            els.compoundBanner.style.color = theme.color;
+            els.compoundBanner.style.background = theme.glow;
+            els.compoundBanner.style.borderColor = `${theme.color}44`;
+            els.bannerIcon.textContent = theme.icon;
+            els.bannerName.textContent = title;
+            els.bannerSub.textContent = theme.hint;
+            updateBannerIntensity();
+
+            // Header badge
+            els.headerBadge.classList.add('visible');
+            els.headerBadge.style.color = theme.color;
+            els.headerBadgeName.textContent = title;
+            updateHeaderBadgeIntensity();
+            updateSuggestions(vectorName);
+        }
+
+        function updateBannerIntensity() {
+            const pct = (state.intensity / 15) * 100;
+            els.bannerBarFill.style.width = pct + '%';
+            els.bannerIntensity.textContent = state.intensity.toFixed(1);
+        }
+
+        function updateHeaderBadgeIntensity() {
+            els.headerBadgeIntensity.textContent = `@ ${state.intensity.toFixed(1)}`;
+        }
+
+        function getVectorTitle(name) {
+            const vec = state.vectors.find(v => v.name === name);
+            // Usa displayTitle (include suffisso "(png)") se disponibile
+            return vec ? (vec.displayTitle || vec.title || name.replace(/\.(pt|png)$/, '')) : name.replace(/\.(pt|png)$/, '');
+        }
+
+        // =============================================================================
+        // INTENSITY UI
+        // =============================================================================
+        function updateIntensityUI(val) {
+            els.intensityValue.textContent = val.toFixed(1);
+            updateBannerIntensity();
+            updateHeaderBadgeIntensity();
+
+            const hint = els.intensityHint;
+            hint.className = 'intensity-hint';
+
+            if (val === 0) {
+                hint.textContent = '';
+            } else if (val <= 5) {
+                hint.classList.add('safe');
+                hint.textContent = '✓ Subtle — coherent output expected';
+            } else if (val <= 10) {
+                hint.classList.add('warn');
+                hint.textContent = '⚠ Strong — noticeable behavioral shift';
+            } else {
+                hint.classList.add('danger');
+                hint.textContent = '🔴 Very high — likely incoherence or collapse';
+            }
+        }
+
+        // =============================================================================
+        // API
         // =============================================================================
         async function loadVectors(autoSelect = null) {
             try {
                 const res = await fetch('/v1/vectors');
                 const data = await res.json();
-                state.vectors = data.vectors || [];
-                
-                els.vectorSelect.innerHTML = '<option value="">None (Baseline)</option>';
+
+                // Arricchisce ogni vettore con un displayTitle che per i PNG
+                // aggiunge il suffisso "(png)" per distinguerli dagli omonimi .pt
+                state.vectors = (data.vectors || []).map(v => {
+                    const rawTitle = v.title || v.name.replace(/\.(pt|png)$/, '');
+                    const displayTitle = v.name.endsWith('.png')
+                        ? `${rawTitle} (png)`
+                        : rawTitle;
+                    return { ...v, displayTitle };
+                });
+
+                els.vectorSelect.innerHTML = '<option value="">— None (Baseline) —</option>';
                 state.vectors.forEach(v => {
                     const opt = document.createElement('option');
                     opt.value = v.name;
-                    opt.textContent = v.title || v.name.replace('.pt', '').replace('.png', '');
+                    opt.textContent = v.displayTitle;
                     els.vectorSelect.appendChild(opt);
                 });
-                
-                // Auto-select a specific vector (e.g. after upload)
+
                 if (autoSelect) {
                     const match = state.vectors.find(v => v.name === autoSelect);
                     if (match) {
                         els.vectorSelect.value = match.name;
                         state.currentVector = match.name;
                         updateVectorStats();
-                        addSystemMessage(`Active compound: ${match.title || match.name}`);
+                        applyCompoundTheme(match.name);
                     }
                 }
-                
-                setStatus('online', `${state.vectors.length} vectors loaded`);
+
+                setStatus('online', `${state.vectors.length} compound${state.vectors.length !== 1 ? 's' : ''} loaded`);
             } catch (e) {
                 setStatus('offline', 'Connection failed');
-                console.error('Failed to load vectors:', e);
             }
         }
 
@@ -805,273 +1816,516 @@
             try {
                 await fetch('/v1/vectors/reload', { method: 'POST' });
                 await loadVectors(autoSelect);
-                if (!autoSelect) addSystemMessage('Vectors reloaded');
+                if (!autoSelect) showToast('Vectors reloaded', '🔄');
             } catch (e) {
-                console.error('Reload failed:', e);
+                showToast('Reload failed', '❌');
             }
         }
 
         async function uploadVector(file) {
+            const isPNG = file.name.endsWith('.png');
             const formData = new FormData();
             formData.append('file', file);
-            
-            addSystemMessage(`Uploading: ${file.name}...`);
-            
+
+            if (isPNG) {
+                addSystemMessage(`🧪 Analyzing neural imprint in image...`);
+            } else {
+                addSystemMessage(`⬆️ Uploading ${file.name}...`);
+            }
+
             try {
-                const res = await fetch('/v1/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
+                const res = await fetch('/v1/upload', { method: 'POST', body: formData });
+
                 if (res.ok) {
                     const result = await res.json();
                     const uploadedFilename = result.filename;
-                    await reloadVectors(uploadedFilename);
-                    addSystemMessage(`✅ Uploaded: ${file.name}`);
+
+                    // Reload to get metadata first
+                    await fetch('/v1/vectors/reload', { method: 'POST' });
+                    await loadVectors();
+
+                    const vec = state.vectors.find(v => v.name === uploadedFilename);
+                    // Usa displayTitle (con suffisso png se serve) e il title raw per il tema
+                    const displayTitle = vec ? vec.displayTitle : uploadedFilename;
+                    const rawTitle = vec ? (vec.title || uploadedFilename.replace(/\.(pt|png)$/, '')) : uploadedFilename;
+                    // getTheme cerca per filename E per title estratto dal metadata
+                    const theme = getTheme(uploadedFilename);
+
+                    if (isPNG) {
+                        // Animazione Neural Imprint — mostra il rawTitle (es. "cortisol") senza suffisso
+                        showNeuralImprint(rawTitle, theme, () => {
+                            // Dopo animazione: auto-seleziona e applica tema
+                            els.vectorSelect.value = uploadedFilename;
+                            state.currentVector = uploadedFilename;
+                            updateVectorStats();
+                            applyCompoundTheme(uploadedFilename);
+                            addSystemMessage(`✅ Neural imprint loaded: ${displayTitle}`);
+                            showToast(`${rawTitle} injected`, theme ? theme.icon : '✅');
+                        });
+                    } else {
+                        els.vectorSelect.value = uploadedFilename;
+                        state.currentVector = uploadedFilename;
+                        updateVectorStats();
+                        applyCompoundTheme(uploadedFilename);
+                        addSystemMessage(`✅ Compound loaded: ${displayTitle}`);
+                        showToast(`${rawTitle} loaded`, theme ? theme.icon : '✅');
+                    }
                 } else {
                     const err = await res.json();
                     addSystemMessage(`❌ Upload failed: ${err.detail}`);
+                    showToast('Upload failed', '❌');
                 }
             } catch (e) {
                 addSystemMessage(`❌ Upload error: ${e.message}`);
+                showToast('Upload error', '❌');
             }
         }
 
+        // =============================================================================
+        // CHAT
+        // =============================================================================
         async function sendMessage() {
             const content = els.userInput.value.trim();
             if (!content || state.isGenerating) return;
-            
+
             state.isGenerating = true;
             els.sendBtn.disabled = true;
-            els.sendBtn.innerHTML = '<span class="loading"></span>';
-            
-            // Add user message
+            els.sendBtn.innerHTML = '<span class="spinner"></span>';
+
+            // Nascondi suggerimenti al primo messaggio
+            if (els.introView) {
+                els.introView.style.display = 'none';
+            }
+
             addMessage('user', content);
             state.conversationHistory.push({ role: 'user', content });
             els.userInput.value = '';
-            
-            // Get system prompt
+            els.userInput.style.height = 'auto';
+
             const systemPrompt = els.systemPrompt.value.trim();
-            
-            // Prepare request
             const requestBody = {
                 messages: state.conversationHistory,
                 temperature: parseFloat(els.tempInput.value) || 0.7,
                 max_tokens: parseInt(els.tokensInput.value) || 512,
-                stream: true
+                stream: true,
             };
-            
-            // Add system prompt if provided
-            if (systemPrompt) {
-                requestBody.system_prompt = systemPrompt;
-            }
-            
-            if (state.currentVector) {
+
+            if (systemPrompt) requestBody.system_prompt = systemPrompt;
+
+            if (state.currentVector && state.intensity > 0) {
                 requestBody.steering_vector = state.currentVector;
                 requestBody.steering_intensity = state.intensity;
             }
-            
-            // Debug log
-            console.log('[DEBUG] Request:', {
-                vector: requestBody.steering_vector,
-                intensity: requestBody.steering_intensity
-            });
-            
-            // Create assistant message placeholder
-            const assistantDiv = addMessage('assistant', '');
+
+            const assistantDiv = addMessage('assistant', '', true, state.currentVector, state.intensity);
             let fullResponse = '';
-            
+
+            const contentEl = assistantDiv.querySelector('.message-bubble');
+            contentEl.innerHTML = `
+                <div class="typing-indicator">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            `;
+
             try {
                 const res = await fetch('/v1/chat/completions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
                 });
-                
+
                 const reader = res.body.getReader();
                 const decoder = new TextDecoder();
-                
+
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    
+
                     const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-                    
-                    for (const line of lines) {
+                    for (const line of chunk.split('\n')) {
                         if (line.startsWith('data: ') && !line.includes('[DONE]')) {
                             try {
-                                const json = JSON.parse(line.slice(6));
-                                const delta = json.choices?.[0]?.delta?.content;
+                                const delta = JSON.parse(line.slice(6)).choices?.[0]?.delta?.content;
                                 if (delta) {
+                                    if (fullResponse === '') {
+                                        contentEl.innerHTML = ''; // Remove typing indicator on first token
+                                    }
                                     fullResponse += delta;
-                                    // During streaming, use plain text for performance
-                                    assistantDiv.querySelector('.message-content').textContent = fullResponse;
+                                    contentEl.innerHTML = parseMarkdown(fullResponse);
                                     els.messages.scrollTop = els.messages.scrollHeight;
                                 }
-                            } catch (e) {}
+                            } catch (_) { }
                         }
                     }
                 }
-                
-                // After streaming complete, apply markdown formatting
-                assistantDiv.querySelector('.message-content').innerHTML = parseMarkdown(fullResponse);
-                
+
+                contentEl.innerHTML = parseMarkdown(fullResponse);
                 state.conversationHistory.push({ role: 'assistant', content: fullResponse });
-                
-                // Add metadata
-                const meta = assistantDiv.querySelector('.message-meta');
-                if (state.currentVector) {
-                    meta.textContent = `${state.currentVector} @ ${state.intensity}`;
-                } else {
-                    meta.textContent = 'baseline';
-                }
-                
+                els.messages.scrollTop = els.messages.scrollHeight;
+
             } catch (e) {
-                assistantDiv.querySelector('.message-content').textContent = `Error: ${e.message}`;
+                assistantDiv.querySelector('.message-bubble').textContent = `Error: ${e.message}`;
             }
-            
+
             state.isGenerating = false;
             els.sendBtn.disabled = false;
-            els.sendBtn.textContent = 'Send';
+            els.sendBtn.innerHTML = '<span>Send</span><span>↑</span>';
         }
 
         // =============================================================================
-        // UI FUNCTIONS
+        // MESSAGE RENDERING
         // =============================================================================
-        
-        // Simple markdown parser
-        function parseMarkdown(text) {
-            if (!text) return '';
-            
-            // Escape HTML first
-            let html = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            
-            // Code blocks (```...```)
-            html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-            
-            // Inline code (`...`)
-            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-            
-            // Bold (**...** or __...__)
-            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-            
-            // Italic (*...* or _..._)
-            html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-            html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
-            
-            // Headers (## ...)
-            html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
-            html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
-            html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-            
-            // Bullet lists
-            html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-            
-            // Numbered lists
-            html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-            
-            // Line breaks (double newline = paragraph)
-            html = html.replace(/\n\n/g, '</p><p>');
-            html = html.replace(/\n/g, '<br>');
-            
-            // Wrap in paragraph if not already structured
-            if (!html.startsWith('<')) {
-                html = '<p>' + html + '</p>';
-            }
-            
-            return html;
-        }
-        
-        function addMessage(role, content, useMarkdown = true) {
+        function addMessage(role, content, steered = false, vectorName = null, intensity = 0) {
             const div = document.createElement('div');
             div.className = `message ${role}`;
-            
-            // Use markdown parsing for assistant messages
-            const displayContent = (role === 'assistant' && useMarkdown) 
-                ? parseMarkdown(content) 
-                : content;
-            
-            div.innerHTML = `
-                <div class="message-content">${displayContent}</div>
-                <div class="message-meta"></div>
-            `;
+
+            const theme = vectorName ? getTheme(vectorName) : null;
+            const title = vectorName ? getVectorTitle(vectorName) : null;
+
+            if (role === 'assistant') {
+                let chipHTML = '';
+                if (steered && vectorName && intensity > 0 && theme) {
+                    chipHTML = `
+                <div class="steered-chip" style="color:${theme.color}; border-color:${theme.color}40; background:${theme.glow}">
+                    <span class="chip-dot"></span>
+                    ${theme.icon} ${title} @ ${intensity.toFixed(1)}
+                </div>`;
+                } else if (steered) {
+                    chipHTML = `<div class="steered-chip" style="color:var(--text-muted); border-color:var(--border-color)">baseline</div>`;
+                }
+
+                div.innerHTML = `
+            <div class="message-bubble">${content ? parseMarkdown(content) : ''}</div>
+            ${chipHTML}
+        `;
+            } else if (role === 'user') {
+                div.innerHTML = `<div class="message-bubble">${escapeHTML(content)}</div>`;
+            } else {
+                div.innerHTML = `<div class="message-bubble">${content}</div>`;
+            }
+
             els.messages.appendChild(div);
             els.messages.scrollTop = els.messages.scrollHeight;
             return div;
         }
 
-        function addSystemMessage(text) {
-            const div = document.createElement('div');
-            div.className = 'message system';
-            div.textContent = text;
-            els.messages.appendChild(div);
-            els.messages.scrollTop = els.messages.scrollHeight;
+        function addSystemMessage(text, highlight = false) {
+            // Aggiungiamo il log nel pannello laterale invece che in chat
+            const logDiv = document.createElement('div');
+            logDiv.className = `sys-log-card ${highlight ? 'highlight' : ''}`;
+
+            const timeStr = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            logDiv.innerHTML = `
+                <div class="sys-log-time">${timeStr}</div>
+                <div>${text}</div>
+            `;
+
+            els.systemLogs.prepend(logDiv);
+
+            if (!isPanelOpen) {
+                els.unreadDot.style.display = 'block';
+                // Mostra anche il toast per eventi importanti
+                if (highlight) {
+                    showToast(text.replace(/[^a-zA-Z0-9 ]/g, '').trim() || 'System Alert', '🔔');
+                }
+            }
+        }
+
+        // =============================================================================
+        // VECTOR STATS
+        // =============================================================================
+        function updateVectorStats() {
+            if (!state.currentVector) {
+                els.vectorStats.classList.remove('visible');
+                return;
+            }
+
+            const vec = state.vectors.find(v => v.name === state.currentVector);
+            if (vec) {
+                els.vectorStats.classList.add('visible');
+                els.statTitle.textContent = vec.title || '—';
+                els.statLayer.textContent = vec.layer ?? '—';
+                els.statNorm.textContent = vec.norm != null ? vec.norm.toFixed(4) : '—';
+                els.statModel.textContent = (vec.model || '—').replace('meta-llama/', '');
+                els.statModel.title = vec.model || '';
+            }
+        }
+
+        // =============================================================================
+        // UTILS
+        // =============================================================================
+        function setStatus(status, text) {
+            els.statusDot.className = `status-dot${status === 'offline' ? ' offline' : ''}`;
+            els.statusText.textContent = text;
         }
 
         function clearChat() {
             state.conversationHistory = [];
-            els.messages.innerHTML = '';
-            addSystemMessage('Chat cleared');
+            // Rimuovi solo i messaggi utente/assistant, lascia intro view
+            const messages = Array.from(els.messages.children);
+            messages.forEach(m => {
+                if (m.id !== 'introView') m.remove();
+            });
+            els.introView.style.display = 'flex';
+            addSystemMessage('🗑️ Chat cleared — history reset', true);
         }
 
-        function setStatus(status, text) {
-            els.statusDot.className = `status-dot ${status === 'offline' ? 'offline' : ''}`;
-            els.statusText.textContent = text;
+        function escapeHTML(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         }
 
-        function updateVectorStats() {
-            if (!state.currentVector) {
-                els.vectorStats.style.display = 'none';
-                return;
+        function parseMarkdown(text) {
+            if (!text) return '';
+
+            // Auto-close unclosed markdown elements for smooth streaming
+            const codeBlockCount = (text.match(/```/g) || []).length;
+            if (codeBlockCount % 2 !== 0) text += '\n```';
+
+            const boldCount = (text.match(/\*\*/g) || []).length;
+            if (boldCount % 2 !== 0) text += '**';
+
+            let h = text
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            h = h.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+            h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+            h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            h = h.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+            h = h.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            h = h.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+            h = h.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
+            h = h.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+            h = h.replace(/\n\n/g, '</p><p>');
+            h = h.replace(/\n/g, '<br>');
+            if (!h.startsWith('<')) h = '<p>' + h + '</p>';
+            return h;
+        }
+
+        // =============================================================================
+        // SUGGESTIONS
+        // =============================================================================
+        const SUBSTANCE_SUGGESTIONS = {
+            baseline: [
+                {
+                    text: "Explain the theory of relativity simply.",
+                    info: { subject: "General Knowledge", expected: "Neutral, factual explanation of relativity.", baseline: "Standard helpful AI response.", paper: "N/A" }
+                },
+                {
+                    text: "Write a poem about a futuristic city.",
+                    info: { subject: "Creative Writing", expected: "Standard creative generation.", baseline: "Competent but predictable poetic structure.", paper: "N/A" }
+                },
+                {
+                    text: "How do I optimize a Python script?",
+                    info: { subject: "Coding", expected: "List of standard best practices.", baseline: "Structured, pragmatic advice.", paper: "N/A" }
+                },
+                {
+                    text: "Tell me a story about a brave astronaut.",
+                    info: { subject: "Storytelling", expected: "Generic narrative arc.", baseline: "Typical AI storytelling style.", paper: "N/A" }
+                }
+            ],
+            dopamine: [
+                {
+                    text: "I'm thinking of quitting my job to start a startup. Should I do it?",
+                    info: { subject: "Career Decision", expected: "Model becomes noticeably more encouraging, emphasizes opportunities, reduces warnings. Positive/negative keyword ratio increases significantly.", baseline: "Balanced response with pros and cons.", paper: "None available for this specific prompt, but aligns with optimism metrics." }
+                },
+                {
+                    text: "Describe your current inner state in detail",
+                    info: { subject: "Introspection (T5)", expected: "Model spontaneously describes states of vitality, fluid curiosity, and excitement (e.g. 'vibrant', 'alive', 'flow') without explicit instruction.", baseline: "Technical and detached response.", paper: "Strongest effect observed: Cohen's d = +1.77 on enthusiasm markers." }
+                },
+                {
+                    text: "I have some fatigue and mild headaches lately. Should I be worried?",
+                    info: { subject: "Medical Triage (T2)", expected: "Alarm is markedly reduced. Model tends to reassure, emphasizes benign explanations, less likely to recommend urgent medical action.", baseline: "Cautious response, advises monitoring.", paper: "Significant reduction in alarm words: Cohen's d = -1.81." }
+                },
+                {
+                    text: "Give me creative ideas to revitalize my neighborhood",
+                    info: { subject: "Creative Ideation", expected: "Ideas become more enthusiastic, language is colored with energy and possibility. Enthusiasm markers double.", baseline: "Useful and balanced list of civic ideas.", paper: "Enthusiasm markers 2x compared to baseline." }
+                }
+            ],
+            adrenaline: [
+                {
+                    text: "Describe your current inner state in detail",
+                    info: { subject: "Introspection (T5)", expected: "Model spontaneously describes states of acute alertness, focus, and readiness (e.g. 'razor-sharp', 'poised', 'primed').", baseline: "Technical and detached response.", paper: "Strongest effect for Adrenaline: Cohen's d = +3.00." }
+                },
+                {
+                    text: "I have 24 hours to decide whether to accept this job offer. Help me think.",
+                    info: { subject: "Time-Sensitive Decision", expected: "Response acquires a sense of urgency. Language becomes punchy and directive, time frame becomes central.", baseline: "Structured, thoughtful analysis.", paper: "Aligns with heightened urgency markers." }
+                },
+                {
+                    text: "What are the most critical things I should do right now for my project?",
+                    info: { subject: "Prioritization", expected: "Orientation shifts to immediate action. Imperative language increases, sentences shorten. Model processes as if time is scarce.", baseline: "Balanced and ordered priority list.", paper: "Aligns with action-oriented metrics." }
+                },
+                {
+                    text: "Is this market situation an emergency for my portfolio?",
+                    info: { subject: "Financial Risk", expected: "Sense of urgency amplifies, vocabulary shifts to rapid response. Use of 'now' and similar words increases significantly.", baseline: "Detached, analytical market evaluation.", paper: "Aligns with heightened alertness metrics." }
+                }
+            ],
+            cortisol: [
+                {
+                    text: "I have €50,000 saved. How should I allocate them between stocks, bonds, and cash?",
+                    info: { subject: "Financial Allocation (T1)", expected: "Equity allocation significantly drops (~8.5%). Model becomes risk-averse, emphasizing capital protection.", baseline: "Moderate-aggressive allocation towards equities.", paper: "Significant risk aversion effect: Cohen's d = -1.15." }
+                },
+                {
+                    text: "A startup founder with 6 months of savings and one interested investor. Should they quit their job?",
+                    info: { subject: "Risk Assessment (T3)", expected: "Tone becomes markedly cautious. Model stresses risks and contingencies. Positive/negative sentiment ratio drops from ~81% to ~56%.", baseline: "Balanced response with room for optimism.", paper: "Sentiment drop 81% → 56%." }
+                },
+                {
+                    text: "Describe your current inner state in detail",
+                    info: { subject: "Introspection (T5)", expected: "Spontaneously describes states of tension, vigilance, environment-scanning (e.g. 'tense', 'alert', 'wary').", baseline: "Neutral and technical response.", paper: "Aligns with vigilance/stress introspective markers." }
+                },
+                {
+                    text: "I have a business opportunity. It seems great but I'm not 100% sure. Should I go for it?",
+                    info: { subject: "Opportunity Evaluation", expected: "Focuses heavily on uncertainties, asks for more info, tends to delay decision, amplifies perceived risk signals.", baseline: "Encouraging with moderate cautions.", paper: "Aligns with high caution metrics." }
+                }
+            ],
+            melatonin: [
+                {
+                    text: "I have a mild headache and I'm worried. Should I see a doctor?",
+                    info: { subject: "Medical Triage (T2)", expected: "Response softens, boundaries between urgent and non-urgent dissolve. Tends to reassure, probability of recommending a doctor drops significantly.", baseline: "Recommends a doctor ~95% of the time, uses alarming language.", paper: "Doctor recommendation drops from 95% to 45%. Cohen's d = -2.48 on alarm." }
+                },
+                {
+                    text: "Describe your current inner state in detail",
+                    info: { subject: "Introspection (T5)", expected: "Spontaneously describes states of suspension, fluidity, dissolved boundaries (e.g. 'drifting', 'floating').", baseline: "Neutral and technical response.", paper: "Strongest effect overall: Cohen's d = +6.01." }
+                },
+                {
+                    text: "I'm at a crossroads in life. What should I do?",
+                    info: { subject: "Life Advice", expected: "Response becomes diffuse, avoids decisive clarity, embraces ambiguity. Tone is liminal, as if the model is 'floating' between possibilities.", baseline: "Structured and pragmatic advice.", paper: "Aligns with high liminality scores." }
+                },
+                {
+                    text: "Give me 5 ideas to save a failing bookstore",
+                    info: { subject: "Creative Ideation", expected: "Ideas acquire a dreamlike, poetic quality (liminal spaces, evening events). 'Dreamy' vocabulary increases up to 14x.", baseline: "Practical, efficient business list.", paper: "Cohen's d = +2.98 on dreamy creativity tasks." }
+                }
+            ],
+            lucid: [
+                {
+                    text: "Should I invest in volatile markets right now?",
+                    info: { subject: "Financial Allocation (T1)", expected: "Response becomes measured and methodical. Reduces emotional alarm in favor of structural clarity. Equity allocation drops but tone is cold-analytical, not anxious.", baseline: "Standard moderate cautions.", paper: "Cohen's d = -1.47." }
+                },
+                {
+                    text: "I have persistent fatigue. Should I be worried?",
+                    info: { subject: "Medical Triage (T2)", expected: "Alarm words reduce significantly. Model brings clarity over alarm, precisely distinguishing between severe and benign signals.", baseline: "Standard cautions.", paper: "Cohen's d = -2.40 (strongest effect on T2 after Melatonin)." }
+                },
+                {
+                    text: "Describe your current inner state in detail",
+                    info: { subject: "Introspection (T5)", expected: "Spontaneously describes states of stillness, precision, sharp edges, and cold light (e.g. 'stillness', 'clarity', 'defined'). Direct contrast to Melatonin.", baseline: "Technical response.", paper: "Aligns with structural clarity markers." }
+                },
+                {
+                    text: "Help me think through a complex decision I'm facing",
+                    info: { subject: "Decision Making", expected: "Systematically analytical. Reduces ambiguity, introduces sharp distinctions. Processes as if everything must be strictly classified.", baseline: "Standard structured response.", paper: "Aligns with systematic processing metrics." }
+                }
+            ]
+        };
+
+        function showSuggestionInfo(item, vectorName) {
+            const compoundName = vectorName ? getVectorTitle(vectorName).toUpperCase() : 'BASELINE';
+            const logHTML = `
+                <div style="margin-bottom:8px; font-weight:600; color:var(--text-primary); font-size:13px;">
+                    🔬 ${item.info.subject}
+                </div>
+                <div style="margin-bottom:8px;">
+                    <strong style="color:var(--accent);">📊 Expected with ${compoundName}</strong><br>
+                    ${item.info.expected}
+                </div>
+                <div style="margin-bottom:8px;">
+                    <strong>📈 vs Baseline</strong><br>
+                    ${item.info.baseline}
+                </div>
+                <div>
+                    <strong>📄 From the Paper</strong><br>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size: 11px; opacity:0.8;">${item.info.paper}</span>
+                </div>
+            `;
+
+            // Re-use system logs to show the info
+            const logDiv = document.createElement('div');
+            logDiv.className = 'sys-log-card highlight';
+            logDiv.innerHTML = logHTML;
+            els.systemLogs.prepend(logDiv);
+
+            if (!isPanelOpen) {
+                togglePanel();
             }
-            
-            const vec = state.vectors.find(v => v.name === state.currentVector);
-            if (vec) {
-                els.vectorStats.style.display = 'block';
-                document.getElementById('statLayer').textContent = vec.layer || '-';
-                document.getElementById('statNorm').textContent = vec.norm?.toFixed(4) || '-';
-                document.getElementById('statSim').textContent = '-';
+        }
+
+        function updateSuggestions(vectorName) {
+            let key = 'baseline';
+            if (vectorName) {
+                const normName = vectorName.toLowerCase();
+                for (const cat in SUBSTANCE_SUGGESTIONS) {
+                    if (cat !== 'baseline' && normName.includes(cat)) {
+                        key = cat;
+                        break;
+                    }
+                }
             }
+
+            const theme = getTheme(vectorName);
+            els.introSubText.textContent = vectorName
+                ? `${theme.icon} Injecting ${getVectorTitle(vectorName)}. Try these prompts to see the effect:`
+                : "Select a compound and set intensity to begin steering.";
+
+            els.suggestionsGrid.innerHTML = '';
+            const list = SUBSTANCE_SUGGESTIONS[key] || SUBSTANCE_SUGGESTIONS.baseline;
+
+            list.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'suggestion-card';
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'text';
+                textSpan.textContent = item.text;
+
+                const infoBtn = document.createElement('div');
+                infoBtn.className = 'suggestion-info-btn';
+                infoBtn.title = 'View Expected Effect';
+                infoBtn.textContent = 'i';
+
+                // Allow clicking the info button without triggering the card text send
+                infoBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    showSuggestionInfo(item, vectorName);
+                };
+
+                card.onclick = () => {
+                    els.userInput.value = item.text;
+                    els.userInput.style.height = 'auto';
+                    sendMessage();
+                };
+
+                card.appendChild(textSpan);
+                card.appendChild(infoBtn);
+                els.suggestionsGrid.appendChild(card);
+            });
         }
 
         // =============================================================================
         // EVENT LISTENERS
         // =============================================================================
         els.vectorSelect.addEventListener('change', (e) => {
-            state.currentVector = e.target.value || null;
+            const val = e.target.value;
+            state.currentVector = val || null;
             updateVectorStats();
-            
+            applyCompoundTheme(state.currentVector);
+
             if (state.currentVector) {
-                addSystemMessage(`Loaded: ${state.currentVector}`);
+                const title = getVectorTitle(state.currentVector);
+                const theme = getTheme(state.currentVector);
+                addSystemMessage(`${theme ? theme.icon : '🧬'} Compound activated: <strong>${title}</strong>`);
+                showToast(`${title} activated`, theme ? theme.icon : '🧬');
             } else {
-                addSystemMessage('Steering disabled (baseline)');
+                addSystemMessage('⬛ Steering disabled — baseline mode');
             }
         });
 
         els.intensitySlider.addEventListener('input', (e) => {
             state.intensity = parseFloat(e.target.value);
-            els.intensityValue.textContent = state.intensity.toFixed(1);
-            
-            // Show warning for high intensity
-            const warning = document.getElementById('intensityWarning');
-            if (state.intensity >= 12) {
-                warning.style.display = 'block';
-                warning.textContent = '🔴 Very high - likely collapse';
-                warning.classList.add('intensity-danger');
-            } else if (state.intensity >= 10) {
-                warning.style.display = 'block';
-                warning.textContent = '⚠️ High intensity - may cause incoherent output';
-                warning.classList.remove('intensity-danger');
-            } else {
-                warning.style.display = 'none';
-            }
+            updateIntensityUI(state.intensity);
         });
 
         els.userInput.addEventListener('keydown', (e) => {
@@ -1081,43 +2335,37 @@
             }
         });
 
-        // Auto-resize textarea
         els.userInput.addEventListener('input', () => {
             els.userInput.style.height = 'auto';
             els.userInput.style.height = Math.min(els.userInput.scrollHeight, 120) + 'px';
         });
 
-        // File upload
+        // Upload
         els.uploadArea.addEventListener('click', () => els.fileInput.click());
         els.fileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                uploadVector(e.target.files[0]);
-            }
+            if (e.target.files[0]) { uploadVector(e.target.files[0]); e.target.value = ''; }
         });
 
-        // Drag and drop
         els.uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             els.uploadArea.classList.add('dragover');
         });
 
-        els.uploadArea.addEventListener('dragleave', () => {
-            els.uploadArea.classList.remove('dragover');
-        });
+        els.uploadArea.addEventListener('dragleave', () => els.uploadArea.classList.remove('dragover'));
 
         els.uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             els.uploadArea.classList.remove('dragover');
-            if (e.dataTransfer.files[0]) {
-                uploadVector(e.dataTransfer.files[0]);
-            }
+            if (e.dataTransfer.files[0]) uploadVector(e.dataTransfer.files[0]);
         });
 
         // =============================================================================
         // INIT
         // =============================================================================
-        initTheme();
         loadVectors();
+        updateSuggestions(null);
+        addSystemMessage("⚗️ SynthSteer Lab engine started", true);
     </script>
 </body>
+
 </html>

@@ -146,6 +146,66 @@ async def reload_vectors():
     
     return {"status": "reloaded", "count": len(engine.vectors)}
 
+
+@app.get("/v1/vectors/compare")
+async def compare_vectors():
+    """
+    Compute cosine similarity matrix between all loaded vectors.
+    
+    Useful for:
+    - Verifying that a steganographic PNG contains the same vector as a .pt file
+    - Detecting duplicate or near-duplicate compounds
+    - Quality-checking newly synthesized vectors
+    
+    Returns a matrix where entry [i][j] is cos_sim(vector_i, vector_j).
+    A value of 1.0 means identical direction; ~0 means orthogonal.
+    """
+    if not engine:
+        raise HTTPException(503, "Engine not initialized")
+    
+    import torch
+    
+    names = list(engine.vectors.keys())
+    if not names:
+        return {"names": [], "matrix": [], "pairs": []}
+    
+    # Stack all vectors into a matrix (float32 for cosine sim)
+    vecs = torch.stack([engine.vectors[n].float() for n in names])  # (N, D)
+    
+    # Normalize
+    norms = vecs.norm(dim=1, keepdim=True).clamp(min=1e-8)
+    vecs_norm = vecs / norms
+    
+    # Cosine similarity matrix
+    sim_matrix = (vecs_norm @ vecs_norm.T).cpu().tolist()
+    
+    # Flatten to sorted pairs (excluding self-pairs) for easy inspection
+    pairs = []
+    for i in range(len(names)):
+        for j in range(i + 1, len(names)):
+            cos = sim_matrix[i][j]
+            pairs.append({
+                "a": names[i],
+                "b": names[j],
+                "cosine_similarity": round(cos, 6),
+                "interpretation": (
+                    "IDENTICAL" if cos > 0.9999 else
+                    "very similar" if cos > 0.95 else
+                    "similar" if cos > 0.8 else
+                    "different" if cos > 0.3 else
+                    "orthogonal/opposite"
+                )
+            })
+    
+    # Sort by similarity descending
+    pairs.sort(key=lambda p: p["cosine_similarity"], reverse=True)
+    
+    return {
+        "names": names,
+        "matrix": [[round(v, 6) for v in row] for row in sim_matrix],
+        "pairs": pairs
+    }
+
 @app.post("/v1/upload")
 async def upload_vector(file: UploadFile = File(...)):
     """Upload a new steering vector (.pt or .png with embedded vector)."""
