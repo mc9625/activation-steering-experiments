@@ -708,7 +708,6 @@ Three patterns emerge from cross-model replication:
 
 *Table 11: Summary of cross-model replication results.*
 
----
 
 ### 5.8 Multimodal Introspection: Visual Input Bypasses Alignment Refusal
 
