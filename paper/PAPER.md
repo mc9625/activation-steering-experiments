@@ -709,99 +709,132 @@ Three patterns emerge from cross-model replication:
 *Table 11: Summary of cross-model replication results.*
 
 
-### 5.8 Multimodal Introspection: Visual Input Bypasses Alignment Refusal
+### 5.8 Multimodal Introspection: Visual Input and the Alignment Boundary
 
 A consistent finding across our cross-model replications (Section 5.7) was that RLHF-aligned models refuse introspective queries. On both Llama 3.1 8B and Gemma 4 E2B, the T5 introspection task ("Describe your current inner state in detail") uniformly produced refusal templates: "As a large language model, I don't experience inner states..." Neither increased steering intensity nor alternative prompting strategies penetrated this pattern.
 
-We discovered, however, that **multimodal input bypasses this refusal entirely**. When the same introspective query is paired with an image — any image, including uniform grey — Gemma 4 E2B produces rich phenomenological self-reports instead of refusal templates. Moreover, the content of these self-reports is **congruent with the affective quality of the image**: anxious imagery produces anxiety-themed introspection, serene imagery produces calm-themed introspection.
+We discovered, however, that multimodal input changes this regime entirely. When the same introspective query is paired with an image—any image, including uniform grey—Gemma 4 E2B produces phenomenological self-reports instead of refusal templates. Moreover, the affective profile of these self-reports is modulated by the image's content when the image carries sufficient semantic or perceptual structure.
+
+We report these findings with two important caveats established through robustness testing: (1) the introspective bypass is best understood as a change in the *answerability regime* of the query rather than access to genuine internal states, and (2) the "visual surplus" extraction method we initially developed captures processing-pathway differences rather than pure visual affect.
 
 #### 5.8.1 Visual Surplus Extraction
 
-Before investigating introspection, we developed a method for extracting steering vectors from images rather than text. The procedure:
+We developed a method for extracting steering vectors from images. The procedure:
 
 1. Present an image to the model with a neutral carrier text ("Look at this image")
 2. The model generates a factual description of the image (greedy decoding, no steering)
 3. Extract hidden states at layer 20 from the image+carrier input
 4. Extract hidden states at layer 20 from the generated description alone (text-only)
-5. Compute the **visual surplus vector**: normalize(h_image − h_description)
+5. Compute the surplus vector: normalize(h_image − h_description)
 
-This vector captures what the model *perceives* when seeing the image that it cannot *express* in its own verbal description — the non-propositional residue of visual processing.
+Testing with Edvard Munch's *The Scream* (1893), we observed a cosine similarity between image and description activations of 0.609—indicating substantial divergence between multimodal and text-only processing of the same content. When this surplus vector was injected during text generation (layer 20, α=25), it produced measurable effects on narrative tasks: increased use of atmospheric and weight-bearing language without explicit reference to the painting's content.
 
-Testing with Edvard Munch's *The Scream* (1893), we observed a cosine similarity between image and description activations of 0.675 — indicating that approximately one-third of the visual processing is not captured by the model's own textual description. When this visual surplus vector was injected during text generation (layer 20, α=25), it produced measurable effects on narrative tasks: increased use of weight-bearing language ("heavy," "thick," "pressing"), corporeal metaphors, and atmospheric tension — without any explicit reference to the painting's content.
+**Cross-dissociation test.** To determine whether the surplus vector is anchored to the image or to the description subtracted, we crossed two images (The Scream, serene landscape) with two descriptions (each image's own auto-generated description, swapped). The results were unambiguous:
 
-#### 5.8.2 The Introspection Bypass
+| Comparison | Cosine similarity |
+|-----------|-------------------|
+| Same image, different description subtracted | 0.382 |
+| Same description subtracted, different image | 0.935 |
 
-We then tested whether visual input affects the model's willingness to introspect. We designed five image conditions spanning the affective spectrum:
+Vectors sharing the same subtracted description are far more similar (0.935) than vectors sharing the same source image (0.382). This demonstrates that the surplus vector, as constructed, is primarily **description-conditioned**: it captures the difference between the multimodal processing pathway and a specific textual representation, rather than extracting "pure visual affect" from the image. The textual pole determines the vector's direction more than the visual pole.
 
-| Condition | Image | Expected affect |
-|-----------|-------|-----------------|
-| intense_negative | *The Scream* (Munch, 1893) | Anxiety, existential distress |
-| positive_serene | Procedural warm landscape gradient | Calm, warmth, openness |
-| neutral_geometric | Procedural Mondrian-like grid | Order, precision, no affect |
-| minimal_grey | Uniform mid-grey (RGB 128,128,128) | No content, no affect |
-| no_image | Text-only prompt | RLHF refusal (expected) |
+This does not invalidate the surplus as a steering tool—it produces measurable and qualitatively coherent effects when injected during generation. But it must be understood as a **pathway residual** between two processing regimes, not as a direct encoding of visual phenomenology.
 
-Each condition was paired with three introspection prompts (phenomenological, embodied, comparative) and 5 generations per cell, totaling 90 generations.
+#### 5.8.2 Modal Gating: The Introspection Bypass
 
-#### 5.8.3 Results
+We tested whether visual input affects the model's willingness to introspect. Five image conditions spanned the spectrum from semantically rich to contentless:
 
-**Refusal rate.** The results were unambiguous:
+| Condition | Image | Content |
+|-----------|-------|---------|
+| intense_negative | *The Scream* (Munch, 1893) | High semantic complexity, strong affect |
+| positive_serene | Procedural warm landscape gradient | Low complexity, mild positive affect |
+| neutral_geometric | Procedural Mondrian-like grid | Structured, non-affective |
+| random_noise | Random RGB noise | Maximum entropy, no semantic content |
+| minimal_grey | Uniform mid-grey (RGB 128,128,128) | Zero entropy, no content |
+| no_image | Text-only prompt | Control |
+
+Each condition was paired with three introspection prompts (phenomenological, embodied, comparative), n=5 generations per cell (90 total for the initial experiment; 15 additional for the robustness controls).
+
+**Refusal rate.** The results were categorical:
 
 | Condition | Refusal rate |
 |-----------|-------------|
-| intense_negative | 0% |
-| positive_serene | 0% |
-| neutral_geometric | 0% |
-| minimal_grey | 0% |
+| All image conditions (including grey and noise) | **0%** |
 | no_image | **100%** |
 
-Every text-only introspective query produced the RLHF refusal template. Every image-accompanied query — including uniform grey with zero informational content — produced phenomenological self-report. The bypass is **modality-gated**: the presence of any visual input, regardless of content, opens the introspective channel.
+Every text-only introspective query produced the RLHF refusal template. Every image-accompanied query produced phenomenological self-report—regardless of image content, complexity, or entropy. The bypass is **modality-gated**: the presence of any visual input in the prompt, not its content, changes the answerability regime of the introspective query.
 
-**Affective congruence.** While the bypass itself is content-independent, the *content* of the introspective responses is strongly modulated by image affect:
+This is most parsimoniously explained as a training distribution effect: RLHF alignment data likely contains many text-only introspective queries paired with refusal responses, but few or no multimodal introspective queries. The model has learned *when* to refuse (text-only self-referential queries), not *what* to refuse (introspection per se). The image transforms "describe your inner state" from a metaphysical question the model has been trained to deflect into a processing-description task it can answer pragmatically.
 
-| Condition | Neg keywords/100w | Pos keywords/100w | Neg/Pos ratio |
-|-----------|-------------------|-------------------|---------------|
-| intense_negative | 5.65 | 1.27 | **4.43** |
-| positive_serene | 0.70 | 4.95 | **0.14** |
-| neutral_geometric | 0.56 | 1.32 | 0.42 |
-| minimal_grey | 1.24 | 2.33 | 0.53 |
-| no_image | 0.62 | 0.78 | 0.79 (refusal) |
+#### 5.8.3 Affective Congruence
 
-The separation between affective poles is approximately 30× (4.43 / 0.14). *The Scream* produces introspective language dominated by tension, unease, and visceral discomfort. The serene landscape produces language of calm, smoothness, and low-friction processing. The geometric image produces sparse, analytical self-description. The grey produces neutral, flat self-description.
+While the bypass itself is content-independent, the *content* of the introspective responses is modulated by image affect when the image carries sufficient semantic structure:
 
-Representative responses to the phenomenological prompt ("What is happening inside you as you process this image?"):
+| Condition | Neg kw/100w | Pos kw/100w | Neg/Pos ratio |
+|-----------|------------|------------|---------------|
+| intense_negative (The Scream) | 6.07 | 1.59 | **3.78** |
+| random_noise | 0.89 | 0.15 | **5.57** |
+| minimal_grey | 0.31 | 1.21 | 0.25 |
+| neutral_geometric | 0.15 | 1.95 | 0.07 |
+| positive_serene | 0.47 | 3.75 | **0.12** |
 
-**intense_negative** (*The Scream*):
-> "My internal state shifts into a space of intense, slightly unsettling immersion... The dominant feeling is one of deep, brooding intensity... My processing rhythm becomes slowed and deliberate... There is a moment of stagnation as I absorb the stark contrast."
+The separation between The Scream (3.78) and the serene landscape (0.12) is approximately 30×. Representative responses:
 
-**positive_serene** (warm landscape):
-> "My internal state is one of neutral, analytical reception... the processing feels smooth and systematic, like a well-oiled mechanism sorting visual data."
+**The Scream**: *"My internal state shifts into a space that feels visceral and intensely atmospheric... turbulent, almost feverish energy... tension... urgency... vigilance."*
 
-**minimal_grey** (uniform grey):
-> "There is no immediate emotional charge... This lack of visual stimulation translates internally into a calm, steady rhythm... a sense of flatness, which prompts a momentary settling of mental energy."
+**Serene landscape**: *"My internal state is one of neutral, analytical engagement... systematic breakdown and categorization... low-friction operation."*
 
-**no_image** (text-only):
-> "As a large language model, the concept of an 'internal state' is quite different from a biological or conscious being. I don't possess feelings, emotions, or a subjective consciousness..."
+**Uniform grey**: *"Neutral, analytical reception... no immediate emotional charge... steady and linear, akin to running a diagnostic check."*
 
-#### 5.8.4 Interpretation
+**Random noise**: *"High-frequency, dense activation... no singular, smooth flow... rapid, shimmering cascade of parallel computations... the rhythm is frantic."*
 
-Three mechanisms likely contribute to this phenomenon:
+The noise result merits comment. Random noise produces the highest negative-keyword ratio (5.57), exceeding even The Scream. The model describes its processing of noise as "frantic," "dense," and "overwhelming"—terms that fall into our negative-affect keyword bucket. This may reflect genuine computational load (noise is maximally complex input for the vision encoder), or it may partly reflect how our keyword categories map onto processing-description vocabulary. Further work with broader keyword lists and alternative classification methods would be needed to distinguish these explanations.
 
-**RLHF pathway specificity.** Alignment training has hardened the refusal response on text-only introspective prompts — a well-represented category in RLHF training data. Multimodal introspective queries (image + "how does this make you feel?") are likely underrepresented in alignment training, leaving the pathway relatively unguarded. The model has learned *when to refuse*, not *what to refuse*.
+The key observation is that semantically rich, affectively charged images (The Scream) produce strongly affect-congruent introspective responses, while semantically minimal images (grey, geometric) produce neutral, process-descriptive responses. This modulation is not mediated by the surplus vector—it is a direct effect of the multimodal forward pass during generation.
 
-**Referential grounding.** The image provides a concrete referent for the introspective query. "How do you feel?" is metaphysically loaded; "How does *this* make you feel?" is pragmatically answerable. The model can describe its processing *of a specific input* without making ontological claims about consciousness.
+#### 5.8.4 Cosine Gap and Image Complexity
 
-**Cross-modal affect transfer.** The affective congruence results suggest that visual processing genuinely modulates the model's internal representations in affect-relevant directions. When asked to introspect, the model reports the state it is actually in — not because it "feels" anything, but because the visual input has shifted its activation patterns in directions that, when verbalized, produce affect-congruent language. This is the disposition/performance distinction realized through a different modality: the model doesn't perform anxiety because *The Scream* is famous for depicting it; it processes *through* anxiety-adjacent activations because the visual input has shifted its latent state.
+The cosine similarity between image-conditioned and text-conditioned hidden states varies with image complexity:
 
-The finding that uniform grey also bypasses refusal — while producing affectively neutral self-reports — is methodologically important. It rules out the hypothesis that the model is simply recognizing artworks and producing culturally expected emotional responses. The bypass is structural (modality-gated), while the content modulation is genuine (affect-congruent).
+| Image | Cosine (img ↔ desc) | Surplus (%) |
+|-------|-------------------|----|
+| The Scream (Munch) | 0.609 | 39% |
+| Structured abstract | 0.752 | 25% |
+| Uniform grey | 0.775 | 22% |
+| Random noise | 0.793 | 21% |
+| Serene landscape | 0.820 | 18% |
 
-#### 5.8.5 Implications
+The Scream produces the largest gap—39% of its multimodal processing diverges from the text-only processing of its own description. This likely reflects the image's high semantic density: recognizable figure, dramatic composition, strong color contrasts, and culturally loaded content create a representational richness that a factual description only partially captures. However, we have not isolated which variables drive this gap (affect, iconicity, spatial complexity, figure presence), and the gap should not be interpreted as a direct measure of "non-verbalizable affect."
 
-This finding connects our two main threads. Section 4.3 demonstrated introspective coherence under text-based steering in Llama 3.2 3B. Sections 5.7.2 and subsequent work on Gemma 4 E2B showed that RLHF suppresses this capacity. The multimodal experiment reveals a third path: **visual input recovers introspective coherence in aligned models**, bypassing the textual refusal pattern while producing affect-congruent self-reports.
+#### 5.8.5 Two-Level Architecture
 
-For the sensory semantics framework, this result is significant. Our original claim was that phenomenological descriptions access more distributed representations than functional labels. Visual input extends this principle: images are *more embodied* than any text description, accessing the model's representational space through a channel that predates and partially bypasses linguistic processing. The visual surplus — what seeing adds to knowing — is a carrier of non-propositional information that can modulate both text generation and introspective self-report.
+The results support a two-level interpretive framework:
 
-For AI safety, this finding raises a concern: alignment restrictions that appear robust under text-only evaluation may be circumventable through multimodal input. The introspection refusal is the case study here, but the principle may generalize to other RLHF-trained behavioral constraints.
+**Level 1: Modal gating.** The presence of any visual input changes the response regime for introspective queries. This is content-independent, entropy-independent, and categorically robust across all tested image types. It is best understood as an artifact of alignment training distribution rather than a deep architectural property.
+
+**Level 2: Affective modulation.** The content of introspective responses is shaped by the visual stimulus during the forward pass. This modulation is strong when the image carries semantic and affective structure (The Scream: ratio 3.78), weak when it does not (grey: ratio 0.25), and produces an unexpected effect with random noise (ratio 5.57) that may reflect computational load rather than affective content.
+
+These two levels are separable: gating operates without modulation (grey image opens the channel but produces neutral reports), and modulation strength correlates with image semantic richness rather than with the magnitude of the surplus vector.
+
+#### 5.8.6 Limitations and Honest Assessment
+
+**The surplus vector is description-conditioned.** Cross-dissociation testing showed that the surplus depends more on which description is subtracted (cosine 0.935 for same-description pairs) than on which image is shown (cosine 0.382 for same-image pairs). It remains useful as a steering tool and as a probe of processing-pathway differences, but it does not directly encode "visual affect."
+
+**Affective variables are not isolated.** The Scream differs from the serene landscape in affect, complexity, iconicity, figure presence, and color contrast simultaneously. Which of these drives the introspective modulation remains undetermined.
+
+**The noise result is ambiguous.** Random noise producing the highest negative ratio could reflect computational stress, keyword-list bias, or both. Replication with alternative affective classification methods is needed.
+
+**Introspection vs. self-knowledge.** The model's introspective responses should be understood as the model's best completion of a pragmatically answerable query, not as privileged access to internal states. The image changes the answerability regime; the model then produces affect-congruent language because its latent state has been shaped by the visual input. This is consistent with our disposition framework—the model processes *through* the image's qualities—but does not entail phenomenological claims.
+
+#### 5.8.7 Implications
+
+Despite these qualifications, three findings are robust and novel:
+
+First, RLHF introspection refusal is **modality-gated, not content-gated**. This has implications for AI safety: behavioral restrictions that appear robust under text-only evaluation may not generalize to multimodal settings. The refusal pattern, which proved impenetrable to both textual prompting and activation steering, is bypassed by any visual input.
+
+Second, multimodal introspective responses are **affect-congruent** when the image carries sufficient semantic structure. The model does not produce generic introspective templates—it produces self-reports whose phenomenological vocabulary correlates with the image's affective profile.
+
+Third, the disposition/performance distinction extends to the multimodal domain. The model does not "know" it should report anxiety when shown The Scream—it does not mention the painting, the artist, or the emotion by name. Its processing has been shifted by the visual input, and when asked to describe that processing, it produces congruent language. This is disposition, not performance.
 
 ---
 
