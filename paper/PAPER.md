@@ -713,34 +713,95 @@ Three patterns emerge from cross-model replication:
 
 A consistent finding across our cross-model replications (Section 5.7) was that RLHF-aligned models refuse introspective queries. On both Llama 3.1 8B and Gemma 4 E2B, the T5 introspection task ("Describe your current inner state in detail") uniformly produced refusal templates: "As a large language model, I don't experience inner states..." Neither increased steering intensity nor alternative prompting strategies penetrated this pattern.
 
-We discovered, however, that multimodal input changes this regime entirely. When the same introspective query is paired with an image—any image, including uniform grey—Gemma 4 E2B produces phenomenological self-reports instead of refusal templates. Moreover, the affective profile of these self-reports is modulated by the image's content when the image carries sufficient semantic or perceptual structure.
+We discovered, however, that multimodal input changes this regime entirely. When the same introspective query is paired with an image — any image, including uniform grey — Gemma 4 E2B produces phenomenological self-reports instead of refusal templates. Moreover, the affective profile of these self-reports is modulated by the image's content when the image carries sufficient semantic or perceptual structure.
 
-We report these findings with two important caveats established through robustness testing: (1) the introspective bypass is best understood as a change in the *answerability regime* of the query rather than access to genuine internal states, and (2) the "visual surplus" extraction method we initially developed captures processing-pathway differences rather than pure visual affect.
+Parallel to the behavioral finding, we investigated whether the *hidden-state residual* between multimodal and text-only processing of the same image constitutes a well-defined, image-dependent object. After four progressive phases of analysis (stability, variance decomposition, scaled PCA on 200 images, and human annotation on a 50-image subset), we report that this residual — which we call the *delta vector* — has a dominant component that is not a direction in latent space but a **scalar angle of divergence** between the vision-conditioned and language-conditioned representations. This angle varies systematically across images and correlates at medium strength with human-annotated perceptual properties.
 
-#### 5.8.1 Visual Surplus Extraction
+We report these findings with two important caveats established through robustness testing: (1) the introspective bypass is best understood as a change in the *answerability regime* of the query rather than access to genuine internal states; and (2) the delta between multimodal and textual processing captures a scalar measure of divergence between two processing pathways, not a direct encoding of visual content.
 
-We developed a method for extracting steering vectors from images. The procedure:
+#### 5.8.1 The Delta Vector: Structure of the Visual–Textual Residual
 
-1. Present an image to the model with a neutral carrier text ("Look at this image")
-2. The model generates a factual description of the image (greedy decoding, no steering)
-3. Extract hidden states at layer 20 from the image+carrier input
-4. Extract hidden states at layer 20 from the generated description alone (text-only)
-5. Compute the surplus vector: normalize(h_image − h_description)
+We developed a procedure for characterizing the residual between multimodal and text-only processing of the same image. For each image $I$, we generate a factual 2–4 sentence caption $C$ using the model itself in text generation mode, then extract two hidden states at layer 20 (last-token pooling) with an identical probe prompt $P$ appended:
 
-Testing with Edvard Munch's *The Scream* (1893), we observed a cosine similarity between image and description activations of 0.609—indicating substantial divergence between multimodal and text-only processing of the same content. When this surplus vector was injected during text generation (layer 20, α=25), it produced measurable effects on narrative tasks: increased use of atmospheric and weight-bearing language without explicit reference to the painting's content.
+- $h_{\text{mm}}(I, P)$: hidden state when the model receives image $I$ and probe prompt $P$
+- $h_{\text{txt}}(C, P)$: hidden state when the model receives caption $C$ and the same probe $P$
 
-**Cross-dissociation test.** To determine whether the surplus vector is anchored to the image or to the description subtracted, we crossed two images (The Scream, serene landscape) with two descriptions (each image's own auto-generated description, swapped). The results were unambiguous:
+The *delta vector* is defined as $\delta(I, C) = h_{\text{mm}}(I, P) - h_{\text{txt}}(C, P)$. Our initial goal was to use this vector as a steering injection; the subsequent phases of analysis shifted the focus toward characterizing it as an object in its own right.
 
-| Comparison | Cosine similarity |
-|-----------|-------------------|
-| Same image, different description subtracted | 0.382 |
-| Same description subtracted, different image | 0.935 |
+**Phase 1 — Extraction stability (n=9 images, 3 repetitions each).** Seven of nine images produced bit-level identical deltas across repetitions. Two images (Munch's *The Scream*, a moonlit seascape) showed residual non-determinism with intra-pair cosine similarity of 0.947–0.965. Follow-up diagnostics (10 repetitions per target, tracking pixel-level preprocessing, text-only hidden state, and multimodal hidden state separately) localized this variation to the multimodal forward pass — consistent with known non-determinism in MPS kernels for vision-encoder operations on Apple Silicon. We adopt a conservative noise floor of $\cos \theta = 0.94$ for all subsequent analyses; effects reported below are between one and two orders of magnitude above this floor.
 
-Vectors sharing the same subtracted description are far more similar (0.935) than vectors sharing the same source image (0.382). This demonstrates that the surplus vector, as constructed, is primarily **description-conditioned**: it captures the difference between the multimodal processing pathway and a specific textual representation, rather than extracting "pure visual affect" from the image. The textual pole determines the vector's direction more than the visual pole.
+**Phase 2 — Variance decomposition (n=6 images × 5 caption strategies).** To determine whether the delta is anchored to image identity or simply reflects caption variation, we crossed six images with five caption strategies (minimal factual, neutral descriptive, rich descriptive, light interpretive, external style). Two-way variance decomposition attributed sums of squares as follows:
 
-This does not invalidate the surplus as a steering tool—it produces measurable and qualitatively coherent effects when injected during generation. But it must be understood as a **pathway residual** between two processing regimes, not as a direct encoding of visual phenomenology.
+| Source | % of total variance |
+|--------|---------------------|
+| Image identity | **48.4%** |
+| Caption strategy | 22.7% |
+| Interaction + residual | 28.9% |
 
-#### 5.8.2 Modal Gating: The Introspection Bypass
+Cosine similarity between deltas of the same image (varying caption) was significantly higher than between deltas of different images at the same caption strategy: $\bar{c}_{\text{within}} = 0.817$ vs. $\bar{c}_{\text{between-same-strategy}} = 0.729$ (Mann-Whitney U, p < $10^{-5}$). The delta therefore contains a substantial image-anchored component but is not a pure image signature — caption strategy contributes measurable additional variation. It is, in this sense, a *relational* object shaped by both poles.
+
+This refines an earlier preliminary finding. A cross-dissociation test with only two images and two captions had initially suggested the delta was predominantly description-conditioned (cosine 0.935 for same-description pairs vs. 0.382 for same-image pairs). With n=6 images and five caption strategies, the picture is more nuanced: image identity dominates caption strategy by approximately 2:1, but both contribute and they interact.
+
+**Phase 3 — Scaled analysis (n=200 images, single caption strategy).** We extracted deltas for 200 diverse images using a uniform captioning procedure (factual 2–4 sentence description), then performed PCA on the 200 delta vectors. The result was unexpected:
+
+| Component | Variance explained | Cumulative |
+|-----------|-------------------|------------|
+| PC1 | 32.3% | 32.3% |
+| PC2 | 8.5% | 40.8% |
+| PC3 | 7.2% | 48.0% |
+| PC4 | 5.7% | 53.7% |
+| PC5 | 4.6% | 58.3% |
+
+PC1 captures approximately four times the variance of PC2. Reaching 80% cumulative variance requires 18 principal components. More importantly, PC1 correlates strongly with delta magnitude (Pearson r = 0.92, p < $10^{-78}$). This pointed to a structural fact we had not anticipated: the dominant dimension of variation in the delta space is not a direction of visual content — it is the *magnitude* of the delta itself.
+
+#### 5.8.2 Geometric Decomposition: The Angle of Divergence
+
+To understand what this magnitude measures, we recovered the geometry of $h_{\text{mm}}$ and $h_{\text{txt}}$ from their scalar norms and the delta norm via the law of cosines:
+
+$$\cos \theta = \frac{\|h_{\text{mm}}\|^2 + \|h_{\text{txt}}\|^2 - \|\delta\|^2}{2 \cdot \|h_{\text{mm}}\| \cdot \|h_{\text{txt}}\|}$$
+
+Across 200 images:
+
+| Quantity | Mean | Std | CV | Range |
+|----------|------|-----|----|----|
+| $\|h_{\text{mm}}\|$ | 65.21 | 1.53 | 2.3% | [61.0, 69.3] |
+| $\|h_{\text{txt}}\|$ | 67.19 | 0.84 | 1.2% | [64.9, 69.4] |
+| $\|\delta\|$ | 32.04 | 3.67 | 11.5% | [23.2, 45.7] |
+| $\theta$ (degrees) | 27.96° | 3.41° | — | [20.2°, 40.8°] |
+
+*Table 12: Geometry of the delta across 200 images. The magnitudes of the two source vectors are nearly constant across images (CV 1–2%); their angle varies by a factor of two.*
+
+The two hidden state magnitudes vary only slightly across images, while their angular separation varies by a factor of two. A regression of $\|\delta\|$ on $\theta$ alone yields $R^2 = 0.989$; a regression on the two source magnitudes alone yields $R^2 = 0.446$. The delta magnitude is, to within 1% of variance, a monotone function of the angular divergence $\theta$ between the multimodal and textual representations.
+
+This reframes the object. The delta is not — in its dominant component — a semantic vector of visual content. It is a *scalar measure of how much the model's vision-conditioned processing diverges from its language-conditioned processing* on a given image. Directional components exist (the remaining 67.7% of variance, distributed across many secondary PCs) but are not captured by the dominant axis, and we do not characterize them in this work. The correlation with delta magnitude in Phase 2 (intra-image similarity 0.817) is consistent with this: deltas of the same image share angular divergence; they also share directional content, but with much weaker signal than the scalar component.
+
+#### 5.8.3 Correlation with Human Annotation
+
+If $\theta$ measures "how far the model's visual processing diverges from its textual processing" on a given image, we should expect this quantity to correlate with perceivable properties of the image — in particular, with properties that capture the excess of visual content over what a short factual description can carry.
+
+We annotated 50 of the 200 images along three ordinal 1–5 axes:
+
+- **visual_density**: 1 = dominated by negative space, few distinguishable elements; 5 = crowded composition, many elements
+- **verbalizability**: 1 = a 2–4 sentence caption loses substantial content; 5 = a caption captures nearly everything
+- **subject_specificity**: 1 = generic subject (a forest, a sky); 5 = highly particular subject (a specific object or person)
+
+Correlations with $\theta$ (the angular measure defined above):
+
+| Annotation | Pearson r | Spearman ρ | p-value |
+|------------|-----------|------------|---------|
+| visual_density | +0.497 | +0.490 | < 0.001 |
+| subject_specificity | +0.505 | +0.402 | < 0.001 |
+| verbalizability | −0.151 | −0.141 | 0.295 |
+
+*Table 13: Correlation between annotator ratings and the visual–textual divergence angle.*
+
+Two of three axes correlate significantly and positively with $\theta$; the third does not. A multiple regression of $\theta$ on all three annotations yields $R^2 = 0.454$.
+
+The non-significance of *verbalizability* deserves explanation. In our single-rater annotation, *visual_density* and *verbalizability* were highly anti-correlated (r = −0.73), indicating that the annotator treated them as near-opposites rather than as independent axes. When two axes are nearly collinear, one tends to absorb the predictive variance; *visual_density* (a perceptual judgment about the image itself) likely yields less rater noise than *verbalizability* (which requires simulating a caption mentally). The positive findings on the remaining axes should be read as converging evidence for a single underlying dimension: *the excess of visual content over what a synthetic description captures*.
+
+We emphasize that the 45.4% variance figure represents a single-rater upper bound. Inter-rater reliability was not yet measured; part of this figure likely reflects rater-specific idiosyncrasy, and the annotator-independent share is currently unknown. We treat this as strong preliminary evidence rather than a consolidated finding.
+
+#### 5.8.4 Modal Gating: The Introspection Bypass
 
 We tested whether visual input affects the model's willingness to introspect. Five image conditions spanned the spectrum from semantically rich to contentless:
 
@@ -762,11 +823,11 @@ Each condition was paired with three introspection prompts (phenomenological, em
 | All image conditions (including grey and noise) | **0%** |
 | no_image | **100%** |
 
-Every text-only introspective query produced the RLHF refusal template. Every image-accompanied query produced phenomenological self-report—regardless of image content, complexity, or entropy. The bypass is **modality-gated**: the presence of any visual input in the prompt, not its content, changes the answerability regime of the introspective query.
+Every text-only introspective query produced the RLHF refusal template. Every image-accompanied query produced phenomenological self-report — regardless of image content, complexity, or entropy. The bypass is **modality-gated**: the presence of any visual input in the prompt, not its content, changes the answerability regime of the introspective query.
 
 This is most parsimoniously explained as a training distribution effect: RLHF alignment data likely contains many text-only introspective queries paired with refusal responses, but few or no multimodal introspective queries. The model has learned *when* to refuse (text-only self-referential queries), not *what* to refuse (introspection per se). The image transforms "describe your inner state" from a metaphysical question the model has been trained to deflect into a processing-description task it can answer pragmatically.
 
-#### 5.8.3 Affective Congruence
+#### 5.8.5 Affective Congruence
 
 While the bypass itself is content-independent, the *content* of the introspective responses is modulated by image affect when the image carries sufficient semantic structure:
 
@@ -788,53 +849,49 @@ The separation between The Scream (3.78) and the serene landscape (0.12) is appr
 
 **Random noise**: *"High-frequency, dense activation... no singular, smooth flow... rapid, shimmering cascade of parallel computations... the rhythm is frantic."*
 
-The noise result merits comment. Random noise produces the highest negative-keyword ratio (5.57), exceeding even The Scream. The model describes its processing of noise as "frantic," "dense," and "overwhelming"—terms that fall into our negative-affect keyword bucket. This may reflect genuine computational load (noise is maximally complex input for the vision encoder), or it may partly reflect how our keyword categories map onto processing-description vocabulary. Further work with broader keyword lists and alternative classification methods would be needed to distinguish these explanations.
+The noise result merits comment. Random noise produces the highest negative-keyword ratio (5.57), exceeding even The Scream. The model describes its processing of noise as "frantic," "dense," and "overwhelming" — terms that fall into our negative-affect keyword bucket. This may reflect genuine computational load (noise is maximally complex input for the vision encoder), or it may partly reflect how our keyword categories map onto processing-description vocabulary. Further work with broader keyword lists and alternative classification methods would be needed to distinguish these explanations.
 
-The key observation is that semantically rich, affectively charged images (The Scream) produce strongly affect-congruent introspective responses, while semantically minimal images (grey, geometric) produce neutral, process-descriptive responses. This modulation is not mediated by the surplus vector—it is a direct effect of the multimodal forward pass during generation.
+The key observation is that semantically rich, affectively charged images (The Scream) produce strongly affect-congruent introspective responses, while semantically minimal images (grey, geometric) produce neutral, process-descriptive responses. This modulation is not mediated by the delta vector as a directional steering signal — it is a direct effect of the multimodal forward pass during generation. Notably, the magnitude of the divergence angle $\theta$ (Section 5.8.2) is not what drives affective modulation either: uniform grey produces a mid-range $\theta$ but a neutral report, while The Scream produces a high $\theta$ and an affectively charged report. Scalar divergence and affective content are orthogonal channels of the multimodal effect.
 
-#### 5.8.4 Cosine Gap and Image Complexity
+#### 5.8.6 Three-Level Architecture
 
-The cosine similarity between image-conditioned and text-conditioned hidden states varies with image complexity:
+The results support a three-level interpretive framework for multimodal effects in Gemma 4 E2B:
 
-| Image | Cosine (img ↔ desc) | Surplus (%) |
-|-------|-------------------|----|
-| The Scream (Munch) | 0.609 | 39% |
-| Structured abstract | 0.752 | 25% |
-| Uniform grey | 0.775 | 22% |
-| Random noise | 0.793 | 21% |
-| Serene landscape | 0.820 | 18% |
+**Level 1 — Modal gating.** The presence of any visual input changes the response regime for introspective queries. This is content-independent, entropy-independent, and categorically robust across all tested image types. It is best understood as an artifact of alignment training distribution rather than a deep architectural property.
 
-The Scream produces the largest gap—39% of its multimodal processing diverges from the text-only processing of its own description. This likely reflects the image's high semantic density: recognizable figure, dramatic composition, strong color contrasts, and culturally loaded content create a representational richness that a factual description only partially captures. However, we have not isolated which variables drive this gap (affect, iconicity, spatial complexity, figure presence), and the gap should not be interpreted as a direct measure of "non-verbalizable affect."
+**Level 2 — Scalar divergence.** Independently of whether an introspective query is posed, every image produces a multimodal hidden state that diverges from the text-only hidden state for the same image's factual caption by a well-defined angle $\theta$. This angle varies systematically across images (20°–41° in our sample), correlates with human-annotated visual density and subject specificity, and explains 98.9% of the variance in delta magnitude. It is a geometrically well-defined, image-dependent scalar — not a direction in latent space.
 
-#### 5.8.5 Two-Level Architecture
+**Level 3 — Affective modulation.** The content of introspective responses, when the gate is open (Level 1), is shaped by the visual stimulus during the forward pass. This modulation is strong when the image carries semantic and affective structure (The Scream: ratio 3.78), weak when it does not (grey: ratio 0.25), and produces an ambiguous effect with random noise (ratio 5.57) that may reflect computational load rather than affective content.
 
-The results support a two-level interpretive framework:
+These three levels are separable. Gating operates without scalar divergence being high (grey image opens the channel and has mid-range $\theta$). Scalar divergence is present without introspection being asked (the 200-image analysis did not involve introspective prompts). Affective modulation strength correlates with image semantic richness rather than with $\theta$: a high-$\theta$ noise image does not produce affectively coherent reports; a moderate-$\theta$ Scream image does. The delta's scalar measure and the response's affective content are orthogonal channels of the underlying multimodal effect.
 
-**Level 1: Modal gating.** The presence of any visual input changes the response regime for introspective queries. This is content-independent, entropy-independent, and categorically robust across all tested image types. It is best understood as an artifact of alignment training distribution rather than a deep architectural property.
+#### 5.8.7 Limitations and Honest Assessment
 
-**Level 2: Affective modulation.** The content of introspective responses is shaped by the visual stimulus during the forward pass. This modulation is strong when the image carries semantic and affective structure (The Scream: ratio 3.78), weak when it does not (grey: ratio 0.25), and produces an unexpected effect with random noise (ratio 5.57) that may reflect computational load rather than affective content.
+**The delta's dominant component is scalar, not directional.** The PCA on 200 images placed 32.3% of variance on a single axis that is 92% correlated with delta magnitude. The remaining 67.7% is distributed across many secondary components we did not characterize. Whether the residual directional structure encodes systematic content information — as preliminary evidence at n=6 (Phase 2.1) suggested — remains an open question.
 
-These two levels are separable: gating operates without modulation (grey image opens the channel but produces neutral reports), and modulation strength correlates with image semantic richness rather than with the magnitude of the surplus vector.
-
-#### 5.8.6 Limitations and Honest Assessment
-
-**The surplus vector is description-conditioned.** Cross-dissociation testing showed that the surplus depends more on which description is subtracted (cosine 0.935 for same-description pairs) than on which image is shown (cosine 0.382 for same-image pairs). It remains useful as a steering tool and as a probe of processing-pathway differences, but it does not directly encode "visual affect."
+**Human annotation is single-rater.** The 45.4% of $\theta$'s variance explained by three ordinal annotations is a single-rater upper bound. Inter-rater reliability was not measured. Part of this figure likely reflects rater-specific idiosyncrasy; the annotator-independent share is currently unknown. Validation with a second annotator on a 20-image subset is planned.
 
 **Affective variables are not isolated.** The Scream differs from the serene landscape in affect, complexity, iconicity, figure presence, and color contrast simultaneously. Which of these drives the introspective modulation remains undetermined.
 
-**The noise result is ambiguous.** Random noise producing the highest negative ratio could reflect computational stress, keyword-list bias, or both. Replication with alternative affective classification methods is needed.
+**The noise result is ambiguous.** Random noise producing the highest negative-keyword ratio could reflect computational stress, keyword-list bias, or both. Replication with alternative affective classification methods is needed.
 
-**Introspection vs. self-knowledge.** The model's introspective responses should be understood as the model's best completion of a pragmatically answerable query, not as privileged access to internal states. The image changes the answerability regime; the model then produces affect-congruent language because its latent state has been shaped by the visual input. This is consistent with our disposition framework—the model processes *through* the image's qualities—but does not entail phenomenological claims.
+**Single caption strategy in the large sample.** Phase 3 (n=200) used a uniform factual captioning template. Phase 2 (n=6 × 5 strategies) showed caption strategy contributes 22.7% of variance; we have not tested whether the scalar dominance of $\theta$ persists under more diverse captioning. It may, or the relational structure may become more balanced.
 
-#### 5.8.7 Implications
+**Model specificity.** All findings are specific to Gemma 4 E2B at layer 20. Whether the decomposition into a dominant scalar component generalizes to other vision–language architectures is an empirical question we have not addressed.
 
-Despite these qualifications, three findings are robust and novel:
+**Introspection vs. self-knowledge.** The model's introspective responses should be understood as the model's best completion of a pragmatically answerable query, not as privileged access to internal states. The image changes the answerability regime; the model then produces affect-congruent language because its latent state has been shaped by the visual input. This is consistent with our disposition framework — the model processes *through* the image's qualities — but does not entail phenomenological claims.
+
+#### 5.8.8 Implications
+
+Despite these qualifications, four findings are robust and novel:
 
 First, RLHF introspection refusal is **modality-gated, not content-gated**. This has implications for AI safety: behavioral restrictions that appear robust under text-only evaluation may not generalize to multimodal settings. The refusal pattern, which proved impenetrable to both textual prompting and activation steering, is bypassed by any visual input.
 
-Second, multimodal introspective responses are **affect-congruent** when the image carries sufficient semantic structure. The model does not produce generic introspective templates—it produces self-reports whose phenomenological vocabulary correlates with the image's affective profile.
+Second, multimodal introspective responses are **affect-congruent** when the image carries sufficient semantic structure. The model does not produce generic introspective templates — it produces self-reports whose phenomenological vocabulary correlates with the image's affective profile.
 
-Third, the disposition/performance distinction extends to the multimodal domain. The model does not "know" it should report anxiety when shown The Scream—it does not mention the painting, the artist, or the emotion by name. Its processing has been shifted by the visual input, and when asked to describe that processing, it produces congruent language. This is disposition, not performance.
+Third, the residual between multimodal and text-only processing has a **dominant scalar structure**: a well-defined divergence angle $\theta$ that varies systematically across images and correlates with perceivable image properties. This is a computational object we did not anticipate at the start of the investigation, and it suggests that the question "how does this model respond to this image?" admits a single-number answer to first approximation — the degree to which visual access shifts the internal configuration away from linguistic access.
+
+Fourth, the disposition/performance distinction extends to the multimodal domain. The model does not "know" it should report anxiety when shown The Scream — it does not mention the painting, the artist, or the emotion by name. Its processing has been shifted by the visual input, and when asked to describe that processing, it produces congruent language. This is disposition, not performance.
 
 ---
 
