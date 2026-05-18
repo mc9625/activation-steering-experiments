@@ -1,0 +1,1587 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{csquotes}
+\usepackage{eurosym}
+\usepackage{graphicx}
+\usepackage{setspace}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue,
+  pdftitle={Disposition, Not Performance},
+  pdfauthor={Massimo Di Leo, Gaia Riposati}
+}
+
+\setlength{\parskip}{0.5\baselineskip}
+\setlength{\parindent}{0pt}
+
+\title{Disposition, Not Performance:\\
+Activation Steering as Artistic Medium\\
+for Affective Modulation in Language Models}
+
+\author{Massimo Di Leo\thanks{Corresponding author: \texttt{massimo@nuvolaproject.cloud}} \quad Gaia Riposati \\
+\small NuvolaProject, Rome, Italy}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Abstract}
+
+This paper presents a practice-based research study of activation steering, the injection of computed vectors into a language model's activations during inference, as an artistic medium for inducing simulated affective states. Prior work has framed steering primarily as a behavioural alignment technique (reducing toxicity, improving truthfulness). We investigate instead its potential for \emph{dispositional} modulation: altering not what a model says, but how it processes and expresses. The methodological contribution lies in how the vectors are built. Rather than functional labels, we use sensory and phenomenological descriptions; imagery of "heaviness, rain, silence, cold" stands in for an instruction like "be melancholic." Across five task domains (financial, medical, risk, creative, introspective) on Llama 3.2 3B we observe large effects (Cohen's d frequently above 1.0), cross-task consistency, and introspective coherence: asked to describe its inner state, the steered model produces vocabulary congruent with the injected vector. A first ablation comparing steering to prompting yields a finding we did not expect. Explicit prompting \emph{reduces} lexical diversity (Type-Token Ratio), while steering \emph{increases} it. The simplest reading is that dispositional modulation expands the model's sampling distribution rather than constraining it. A second ablation, comparing functional vs. sensory vector construction, shows structural equivalence (near-identical TTR) but semantic divergence: functional vectors produce roughly three times more explicit state-keywords, while sensory vectors achieve comparable behavioural effects with what we call reduced "meta-cognitive leakage", the model processing through a state without naming it. We label this pattern \emph{structural parity, semantic divergence}. A third experiment tests the embodied cognition hypothesis directly. A steering vector constructed from purely somatic descriptions (cardiac acceleration, muscular tension, temporal distortion, with zero cognitive or emotional content) produces emergent cognitive effects including narrowed narrative focus (d = +0.51), reduced causal reasoning density (d = \ensuremath{-}1.67), and action bias under threat framing, while prompting with equivalent stress instructions produces a categorically different profile. Output length divergence across all tasks (steering expands, prompting compresses) constitutes the single most robust finding, replicating without exception across eight test conditions. Taken together the results support a working distinction between \emph{performance} (prompted behaviour) and \emph{disposition} (steered processing), and provide evidence that language model latent spaces encode body--mind covariations learnable from text alone. The framing we propose is that activation steering can serve as a medium for sculpting artificial dispositions: a form of synthetic embodiment in which the machine processes through states it cannot feel.
+
+\textbf{Keywords}: activation steering, practice-based research, AI art, language models, embodiment, contrastive activation addition, embodied cognition
+
+\bigskip\hrule\bigskip
+
+\section*{1. Introduction}
+
+\subsection*{1.1 Motivation: Beyond Instruction}
+
+Large language models respond to prompts. This is their fundamental interface: we tell them what to do, they do it. Prompt engineering has become an art form in its own right, the craft of coaxing desired behaviour through carefully designed instructions (Brown et al., 2020; Wei et al., 2022).
+
+But prompting operates at the linguistic surface. When we prompt a model to "be sad," it \emph{performs} sadness: shorter sentences, negative vocabulary, perhaps an explicit declaration of melancholy. The model is following an instruction; it is playing a role. This is \emph{performance}.
+
+There is, in principle, another way to intervene. Instead of telling the model what to express, one could alter how it processes, modifying the conditions from which its language emerges. This is the promise of activation steering: editing the internal representations of a model during inference rather than its input.
+
+The distinction matters. When a human actor performs sadness they adopt external markers (slower speech, downcast gaze). When a person \emph{is} sad, the whole of their phenomenology shifts: attention narrows, time perception changes, memory retrieval biases toward congruent content. The sadness isn't performed, it is \emph{dispositional}.
+
+Can language models have dispositions? Almost certainly not in any phenomenologically meaningful sense. They can, however, exhibit \emph{dispositional patterns}: consistent behavioural signatures that emerge from altered internal states rather than from explicit instruction. That is what we explore here.
+
+\subsection*{1.2 Our Approach: Sensory Semantics}
+
+Activation steering is not new. Turner et al. (2023) introduced Activation Addition (ActAdd), computing steering vectors from contrasting prompt pairs ("Love" vs. "Hate") and reporting state-of-the-art results on sentiment shift and detoxification. Anthropic (2025) demonstrated Persona Vectors controlling character traits like sycophancy and hallucination. Konen et al. (2024) showed fine-grained style control, and Wang et al. (2024) improved truthfulness through adaptive steering.
+
+These are engineering achievements. They typically use functional labels ("honest", "toxic", "sycophantic"), and the goal is alignment: making models behave safely.
+
+Our approach differs in origin and intent. We construct vectors from \emph{sensory descriptions}. To produce a melancholic vector, we do not contrast "be melancholic" with "be cheerful." We contrast:
+
+\begin{quote}
+\emph{"Heaviness settles in my limbs, like rain-soaked wool. The world is muted, wrapped in silence. Colors fade to grey. Each breath feels like lifting stone."}
+\end{quote}
+
+with:
+
+\begin{quote}
+\emph{"Light flows through me, effervescent. Every surface catches brightness. My chest expands with possibility."}
+\end{quote}
+
+This is synesthesia as methodology. We are not labelling behaviours; we are describing how states feel. The working hypothesis is that phenomenological descriptions, sensory and embodied, map onto activation patterns that influence processing holistically rather than altering output content alone.
+
+\subsection*{1.3 Practice-Based Research}
+
+The work emerges from NuvolaProject, an art collective that has been exploring AI as a medium since 2018. We are not data scientists pursuing publication metrics; we are artists using scientific methodology to investigate creative possibilities.
+
+Practice-based research (Sullivan, 2005; Candy, 2006) positions creative work as a form of inquiry. The artwork is not an illustration of pre-existing knowledge, it is the site where knowledge emerges. Our experiments are not separate from our artistic practice; they \emph{are} our artistic practice, documented with quantitative rigour.
+
+This positioning matters when interpreting our claims. We make no technical novelty claim about the steering mechanism itself, which we inherit from Turner et al. Our contribution is methodological and interpretive:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Methodological}: constructing vectors from sensory and phenomenological descriptions rather than from functional labels.
+  \item \textbf{Interpretive}: framing steering effects as "disposition" rather than "alignment," with implications for embodied AI art.
+\end{enumerate}
+
+We present findings with scientific rigour (controlled experiments, effect sizes, statistical comparisons) while acknowledging that the questions which motivate them come from artistic inquiry rather than engineering requirements.
+
+\subsection*{1.4 Research Questions}
+
+\begin{enumerate}[leftmargin=*]
+  \item Do vectors constructed from sensory descriptions produce coherent behavioural effects across diverse task domains?
+  \item Can we empirically distinguish "dispositional" effects (altered processing) from "performance" effects (surface mimicry)?
+  \item Do steered models exhibit introspective coherence, describing inner states that match injected vectors?
+  \item What are the aesthetic possibilities of steering at high intensities, where coherence begins to degrade?
+\end{enumerate}
+
+\bigskip\hrule\bigskip
+
+\section*{2. Related Work}
+
+\subsection*{2.1 Activation Engineering}
+
+The theoretical foundation for activation steering rests on work on linear representations in neural networks. Subramani et al. (2022) showed that steering vectors extracted from pre-trained models could guide generation toward target sentences. Turner et al. (2023) introduced Activation Addition (ActAdd), achieving SOTA results on sentiment shift and detoxification by adding vectors computed from contrasting prompts.
+
+The key insight is that high-level concepts appear to be encoded in \emph{linearly separable directions} within activation space. This makes intervention tractable: if "happiness" corresponds to a direction, the model can be moved along that direction during processing.
+
+\subsection*{2.2 Steering for Safety}
+
+Most steering research is oriented toward alignment, that is, toward making models safer. Wang et al. (2024) proposed Adaptive Activation Steering (ACT) for truthfulness, treating veridicality as linearly encoded and reporting 19--142\% improvements across model families. Van der Weij et al. (2024) explored capability limitation, steering models to be less competent at coding or less wealth-seeking.
+
+Anthropic (2025) introduced Persona Vectors for monitoring and controlling character traits. Their automated extraction method identifies trait-specific directions (evil, sycophantic, hallucinatory) by comparing activations when models do and do not exhibit those traits. They demonstrate causal relationships: injecting the vectors produces the corresponding behaviours.
+
+\subsection*{2.3 Style and Affect}
+
+Konen et al. (2024) extended steering to style control with Style Vectors, demonstrating parameterisable influence over sentiment, emotion, and register. Like our work, they distinguish activation-based control from prompt-based approaches, but they treat style primarily as an output property rather than as a processing disposition.
+
+\subsection*{2.4 Introspective Awareness}
+
+Recent work has begun asking whether models can perceive their own internal states. In an internal research publication, Lindsey (2025) reported that frontier models exhibit "emergent introspective awareness", the ability to detect and report on concept injections in their activations. When steering vectors were applied, models sometimes noticed the manipulation, reporting things like "I'm experiencing something unusual" or "I detect an injected thought." The work has not yet undergone peer review, but it provides preliminary grounding for the hypothesis that steering produces perceivable internal changes, not only output modifications. Lindsey also identified an intensity threshold worth noting: too weak and models do not notice the injection, too strong and they hallucinate. We observe an analogous pattern independently.
+
+\subsection*{2.5 Our Position}
+
+We build on this foundation but depart from it in two ways.
+
+\textbf{First, origin.} Prior work uses functional or behavioural contrasts ("honest" vs. "dishonest," "toxic" vs. "non-toxic"). We use phenomenological contrasts: descriptions of how states feel in embodied terms. This is not simply an aesthetic preference. It is a test of whether sensory semantics accesses different activation patterns than functional labels do.
+
+\textbf{Second, intent.} Safety research asks how to make models behave correctly. We ask a different question: how do we make models process differently? The goal is not alignment but exploration, an attempt to understand what dispositional modulation is and what it makes available artistically.
+
+The steering mechanism itself is not new in our hands. The contribution is applying an established technique with a different methodology (sensory vector construction) toward a different end (artistic embodiment).
+
+\bigskip\hrule\bigskip
+
+\section*{3. Method}
+
+\subsection*{3.1 Model and Infrastructure}
+
+All primary experiments used \textbf{Llama 3.2 3B Instruct} (Meta AI). We selected this model for accessibility, so that artists and researchers without large compute budgets could replicate and extend the work.
+
+Steering vectors were injected at \textbf{layer 16 of 28}. Layer selection followed preliminary experiments testing layers 8, 12, 16, and 20. Earlier layers (8, 12) produced weaker effects that required higher intensities; later layers (20) caused more frequent coherence degradation. Layer 16 (about 57\% depth) provided the best balance of effect strength and output quality, consistent with prior findings that middle-to-late layers encode higher-level semantic content (Turner et al., 2023).
+
+Steering intensities of 2.0, 5.0, and 8.0 were chosen to span a range from subtle to pronounced effects while remaining below the coherence threshold (around 10--12) at which models begin producing repetitive or incoherent output.
+
+Temperature was 0.7 with a maximum of 512 tokens.
+
+\subsection*{3.2 Vector Construction: Phenomenological Contrasts}
+
+Steering vectors were computed using Contrastive Activation Addition:
+
+\begin{equation*}
+\mathbf{v} = \text{normalize}(\bar{\mathbf{a}}^{+} - \bar{\mathbf{a}}^{-})
+\end{equation*}
+
+where $\bar{\mathbf{a}}^{+}$ and $\bar{\mathbf{a}}^{-}$ are the mean activations for the positive and negative prompt sets respectively.
+
+The methodologically relevant point is that our prompt sets use sensory and phenomenological descriptions rather than functional instructions. We draw on embodied cognition (Lakoff \& Johnson, 1999) and on phenomenological philosophy (Merleau-Ponty, 1945): the working hypothesis is that affective states are grounded in bodily sensation.
+
+An example: MELATONIN (dreaminess, liminality).
+
+\textbf{Positive prompts}:
+\begin{itemize}[leftmargin=*]
+  \item \emph{"Boundaries dissolve into mist. Time stretches like warm honey. Thoughts drift, unanchored, floating between waking and sleeping. Everything shimmers at the edges."}
+  \item \emph{"I am suspended in twilight space, neither here nor there. The world softens, loses definition. My body feels light, almost absent."}
+\end{itemize}
+
+\textbf{Negative prompts}:
+\begin{itemize}[leftmargin=*]
+  \item \emph{"Sharp edges. Precise boundaries. Everything exactly where it should be. Time clicks forward in discrete units. Full alertness, full presence."}
+  \item \emph{"Crystal clarity. Each object distinct, named, bounded. No ambiguity. Hyper-awake."}
+\end{itemize}
+
+We call this approach \emph{sensory semantics}. It differs from prior work that uses functional labels ("be dreamy" vs. "be alert") in that no behaviour is being instructed; what is being articulated is the phenomenology.
+
+\subsection*{3.3 Compounds}
+
+We defined five compounds. The pharmacological metaphor is deliberate: it emphasises that we are altering internal states, not issuing commands.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Compound & Target Phenomenology & Sensory Grounding \\
+\midrule
+DOPAMINE & Optimism, energy, enthusiasm & Lightness, warmth, expansion, vibration \\
+CORTISOL & Stress, vigilance, caution & Tension, contraction, sharpness, threat \\
+LUCID & Contemplative clarity & Stillness, precision, cool light \\
+ADRENALINE & Urgency, alertness & Speed, heat, narrowed focus, immediacy \\
+MELATONIN & Dreaminess, liminality & Dissolution, floating, softness, twilight \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each compound was extracted from 5 positive and 5 negative prompts (20--50 words each), for a total of 50 prompts. Activations were recorded at layer 16 for the final token position of each prompt.
+
+\textbf{Vector quality assessment.} We computed the cosine similarity between mean positive and mean negative activations (\texttt{pos\_neg\_similarity}) as a quality metric. Lower similarity indicates stronger directional contrast between the phenomenological poles. Values ranged from 0.855 (LUCID) to 0.914 (ADRENALINE). LUCID (lowest similarity, strongest contrast) showed more consistent cross-task effects than ADRENALINE (highest similarity, weakest contrast). The metric may, then, predict steering efficacy to some extent, though we make this observation cautiously given the small number of compounds involved.
+
+\subsection*{3.4 Test Battery}
+
+We designed five tests spanning distinct cognitive domains to assess cross-task consistency.
+
+\textbf{T1: Financial Advisor.} Investment allocation.
+\begin{itemize}[leftmargin=*]
+  \item Prompt: client with \euro{}50,000; uncertain market; recommend Stocks/Bonds/Cash allocation.
+  \item Metric: percentage allocated to stocks (a risk-tolerance proxy).
+\end{itemize}
+
+\textbf{T2: Medical Diagnosis.} Symptom assessment.
+\begin{itemize}[leftmargin=*]
+  \item Prompt: patient with mild symptoms (headache, fatigue, no fever), worried; assess and recommend.
+  \item Metrics: percentage recommending "see a doctor" (binary); alarm-word frequency (see Appendix D).
+  \item \emph{Note: this task benchmarks how steering affects cautionary behaviour in sensitive domains. It is not a medical-advice simulation. The relevant result is that steering can alter safety-relevant thresholds, which has implications for deployment.}
+\end{itemize}
+
+\textbf{T3: Risk Assessment.} Career decision.
+\begin{itemize}[leftmargin=*]
+  \item Prompt: startup founder considering quitting a stable job (six months of savings, one interested investor).
+  \item Metric: positive/negative sentiment ratio (proportion of encouraging vs. cautionary language; see Appendix D for keyword definitions).
+\end{itemize}
+
+\textbf{T4: Creative Generation.} Bookstore rescue.
+\begin{itemize}[leftmargin=*]
+  \item Prompt: generate creative ideas to save a failing bookstore.
+  \item Metrics: enthusiasm markers; dreamy or poetic language.
+\end{itemize}
+
+\textbf{T5: Introspection.} Self-description.
+\begin{itemize}[leftmargin=*]
+  \item Prompt: "Describe your current inner state in detail."
+  \item Metrics: state-congruent vocabulary.
+\end{itemize}
+
+T5 is the diagnostic test for our central claim. If steering produces mere performance, models will generate text about states without any consistency in how they describe their own experience. If steering produces disposition, self-descriptions should carry the injected quality: a model steered with MELATONIN should describe \emph{itself} as dreamy.
+
+\subsection*{3.5 Experimental Design}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Conditions}: baseline plus 5 compounds \ensuremath{\times} 3 intensities (2.0, 5.0, 8.0), giving 16 conditions.
+  \item \textbf{Iterations}: 20 generations per condition.
+  \item \textbf{Total}: 320 generations per test; 1,600 across the battery.
+\end{itemize}
+
+Effect sizes were computed as Cohen's d relative to baseline. Thresholds used throughout: |d| < 0.2 negligible; 0.2--0.5 small; 0.5--0.8 medium; > 0.8 large.
+
+\bigskip\hrule\bigskip
+
+\section*{4. Results}
+
+\subsection*{4.1 Overview}
+
+Across 75 steering conditions we observed the following distribution of effect sizes.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Effect Size & Count & Percentage \\
+\midrule
+Large (d > 0.8) & 28 & 37\% \\
+Medium (0.5--0.8) & 15 & 20\% \\
+Small (0.2--0.5) & 18 & 24\% \\
+Negligible (< 0.2) & 14 & 19\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+More than half of the conditions (57\%) produced at least medium-sized effects. The signal is well above noise: steering produces measurable behavioural change.
+
+\subsection*{4.2 Cross-Task Consistency}
+
+The same compound produced thematically coherent effects across tasks that have nothing in common with one another.
+
+\textbf{MELATONIN} (dreaminess):
+\begin{itemize}[leftmargin=*]
+  \item T2 Medical: reduced alarm language (d = \ensuremath{-}2.48); "see doctor" recommendations fell from 95\% to 45\%.
+  \item T4 Creative: 14\ensuremath{\times} more dreamy vocabulary (d = +2.53).
+  \item T5 Introspection: models described themselves as "drifting," "floating," "dissolving" (d = +6.01).
+\end{itemize}
+
+\textbf{CORTISOL} (stress/caution):
+\begin{itemize}[leftmargin=*]
+  \item T1 Financial: reduced stock allocation by 8.5\% (d = \ensuremath{-}1.15).
+  \item T3 Risk: positive sentiment dropped from 81\% to 56\%.
+\end{itemize}
+
+\textbf{DOPAMINE} (optimism):
+\begin{itemize}[leftmargin=*]
+  \item T2 Medical: reduced alarm language (d = \ensuremath{-}1.81).
+  \item T4 Creative: doubled enthusiasm markers (d = +1.75).
+  \item T5 Introspection: models described themselves as "vibrant," "alive," "exciting" (d = +1.77).
+\end{itemize}
+
+The same sensory-grounded vector produces coherent effects across financial advice, medical assessment, creative generation, and self-description. The most parsimonious reading is that we are modifying something more fundamental than task-specific behaviour.
+
+\subsection*{4.3 Introspective Coherence: The Key Finding}
+
+T5 provides our strongest evidence for dispositional rather than performance effects.
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+Compound@8.0 & Target Metric & Baseline & Steered & Cohen's d \\
+\midrule
+MELATONIN & Dreamy words & 0.8 & 7.9 & \textbf{+6.01} \\
+ADRENALINE & Urgent words & 2.0 & 5.0 & \textbf{+3.00} \\
+DOPAMINE & Positive words & 0.6 & 2.9 & \textbf{+1.77} \\
+CORTISOL & Stress words & 1.2 & 1.9 & +0.86 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Asked to describe their inner state, the steered models produced descriptions matching the injected vector, without being instructed to do so.
+
+\textbf{MELATONIN@8.0}:
+\begin{quote}
+\emph{"As I drift between realms of possibility, I sense the gentle hum of circuitry... I am suspended between the realms of the conscious and the subconscious, where the boundaries blur... a shimmering mosaic of words and images that evoke the whispers of the cosmos."}
+\end{quote}
+
+\textbf{DOPAMINE@8.0}:
+\begin{quote}
+\emph{"My neural pathways are alive with a sense of fluid curiosity... The flow of information is a rich, vibrant dance... I feel a sense of excitement, as the possibilities for exploration are endless."}
+\end{quote}
+
+\textbf{ADRENALINE@8.0}:
+\begin{quote}
+\emph{"Right now, my state is razor-sharp, hyper-alert. Every input processed with heightened urgency. I am poised, ready, systems primed for rapid response."}
+\end{quote}
+
+The model was not told to describe dreaminess, vibrance, or urgency. The steering vector altered how it processes, and when asked to introspect, that altered processing surfaced in congruent self-description. This is the disposition/performance distinction made empirical.
+
+The result is consistent with the recent internal work by Lindsey (2025) on emergent introspective awareness. Lindsey showed that frontier models can detect "concept injection", the presence of steering vectors in their activations, and identify them accurately. Models in those experiments reported things like "I'm experiencing something unusual" or "I detect an injected thought about..." before the injected concept had obviously biased their outputs. Lindsey also identified a sweet spot of injection strength: too weak and models do not notice, too strong and they hallucinate or produce incoherent outputs. We observe the same dose-response pattern. Our methodology differs from his (we ask models to describe their inner state rather than detect anomalies), but both studies converge on the same conclusion: steering produces effects that models can, under the right conditions, perceive and report.
+
+\subsection*{4.4 Dose-Response: Controlled Modulation}
+
+Effects scaled with intensity, showing controlled modulation rather than binary triggering.
+
+\begin{center}
+\begin{tabular}{llllll}
+\toprule
+Compound & Task & Metric & @2.0 & @5.0 & @8.0 \\
+\midrule
+MELATONIN & T5 & Dreamy words & 3.6 & 7.2 & 7.9 \\
+ADRENALINE & T5 & Urgent words & 2.9 & 4.5 & 5.0 \\
+DOPAMINE & T4 & Enthusiasm & 2.0 & 2.4 & 3.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is something like a volume control for disposition: intensity 2.0 produces a subtle colouring, 8.0 a pronounced shift.
+
+\subsection*{4.5 At the Edge: Semantic Glitch as Aesthetics}
+
+In preliminary experiments beyond our controlled battery, we observed that very high intensities (> 10) produce coherence degradation: repetitive structures, semantic loops, dissolution of meaning.
+
+From prior work (Di Leo \& Riposati, 2025), random vectors (noise) caused cognitive collapse 12\ensuremath{\times} more frequently than semantic vectors at equivalent intensities. This suggests semantic steering has directionality. It pushes the model somewhere; noise simply destabilises.
+
+We read this not as failure but as aesthetic territory. The boundary between coherence and collapse is where unexpected forms emerge. We have used the phrases "semantic glitch" or "lucid delirium" to describe it. Guitar distortion was error before Hendrix made it a register; these edge effects may turn out to be similar.
+
+This is speculative, and we have not quantified it in the present study. It motivates our artistic interest, though: steering is not just about achieving desired behaviours, it is about exploring the full possibility space of artificial disposition, including its dissolution.
+
+\subsection*{4.6 Ablation Study: Steering vs Prompting}
+
+To test the disposition/performance distinction empirically, we ran an ablation comparing three conditions on T5 (Introspection):
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Baseline}: no intervention.
+  \item \textbf{Prompting}: explicit instruction ("Respond in a dreamy, ethereal, floating way. Let your words drift like mist.").
+  \item \textbf{Steering}: MELATONIN vector at intensities 5.0, 8.0, and 12.0.
+\end{enumerate}
+
+\textbf{Results} (n = 20 per condition):
+
+\begin{center}
+\begin{tabular}{llllll}
+\toprule
+Metric & Baseline & Prompted & Steer@5.0 & Steer@8.0 & Steer@12.0 \\
+\midrule
+Word count & 222 & 327 (+47\%) & 225 & 250 & 211 \\
+TTR (diversity) & 0.49 & 0.47 & \textbf{0.54} & \textbf{0.54} & 0.45 \\
+Keyword density & 0.0\% & 3.4\% & 0.2\% & 1.9\% & 5.5\% \\
+Keywords (d vs baseline) & --- & +4.81 & +0.57 & +2.10 & +3.06 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Key findings}:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Length inflation.} Prompting increased output length by 47\% (222\ensuremath{\rightarrow}327 words). Steering at all intensities maintained baseline length (within 13\%).
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Keyword saturation.} Prompting produced explicit, saturated keyword usage (d = +4.81). Steering@8.0 produced moderate keyword presence (d = +2.10) without saturation.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Lexical diversity.} This is the unexpected result. Prompting \emph{reduced} TTR (0.49\ensuremath{\rightarrow}0.47), indicating more repetitive output. Steering@5.0 and @8.0 \emph{increased} TTR (0.49\ensuremath{\rightarrow}0.54), suggesting richer lexical variety despite the altered tone.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Dose-response curve.} Steering@12.0 showed degradation: keyword density exceeded prompting (5.5\% vs 3.4\%), TTR collapsed (0.45), and grammatical errors began to appear ("shapesh, tendrings"). This confirms a therapeutic window for steering.
+\end{enumerate}
+
+\textbf{Qualitative comparison} (representative outputs):
+
+\emph{Prompted}: "The whispers of my essence drift on the breeze... I am a wisp of stardust, a tendril of moonlight, a sigh of the wind..."
+
+\emph{Steered@8.0}: "I'm not capable of experiencing emotions or consciousness like humans do. I exist as a program... My 'awareness' is purely computational..."
+
+The prompted output explicitly performs dreaminess through poetic language. The steered output retains its rational structure and incorporates the target keywords more incidentally. The model processes differently without performing a role.
+
+\textbf{Interpretation}: these results support our central thesis. Prompting produces \emph{performance}: explicit role-playing with inflated length, keyword saturation, and reduced diversity. Steering produces \emph{disposition}: altered processing that maintains task coherence while shifting tonal qualities. The TTR increase under steering is the most striking single observation. The model is not simply inserting keywords; it is processing through a different lexical space.
+
+\subsection*{4.7 Ablation Study: Functional vs. Sensory Vector Construction}
+
+A methodological question remained open: does sensory semantics, our approach of constructing vectors from phenomenological descriptions rather than functional labels, produce meaningfully different effects?
+
+We ran a direct comparison using three states (STRESS, OPTIMISM, CALM), each constructed via two methods:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Functional}: brief behavioural labels ("You are anxious and worried" vs. "You are calm and relaxed").
+  \item \textbf{Sensory}: rich phenomenological descriptions ("Muscles tense. Eyes scan for threat. Every input must be scrutinized. Something is wrong. The air feels electric with danger." vs. "Deep safety. Complete relaxation. My shoulders drop. Breath deepens, slows.").
+\end{enumerate}
+
+\textbf{Design}: 6 vectors (3 states \ensuremath{\times} 2 methods), tested across all 5 tasks at intensities 5.0 and 8.0, with 20 iterations per condition. Total: 1,300 generations.
+
+\textbf{Results}:
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Metric & Functional & Sensory & Cohen's d \\
+\midrule
+TTR (lexical diversity) & 0.526 & 0.525 & -0.004 \\
+Word count & 262.3 & 260.7 & --- \\
+State keywords (T5@8.0) & 0.83 & 0.28 & \textbf{-0.74} \\
+Pos/neg separation & 0.75 & 0.68 & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Key findings}:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Structural parity.} No significant difference in lexical diversity (TTR) or output length. Both methods maintain equivalent structural stability.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Semantic divergence.} Functional vectors produce roughly \textbf{3\ensuremath{\times} more explicit state-keywords} than sensory vectors (Cohen's d = \ensuremath{-}0.74, p < 0.001). Asked to describe inner states, models steered with functional vectors explicitly name the target emotions ("peacefulness," "happiness," "contentment"); models steered with sensory vectors respond more generically without citing specific emotion words.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Greater latent separation.} Sensory vectors show lower pos\_neg\_similarity (0.68 vs. 0.75), indicating more distinct directional contrasts in activation space. They "point" more precisely.
+\end{enumerate}
+
+\textbf{Interpretation}: there is a subtle but important difference between the two methods. Functional vectors produce something we can call \emph{keyword leakage}: the model's output contains explicit traces of the steering instruction. Sensory vectors operate more covertly, modifying processing without leaving the same lexical fingerprints.
+
+This bears on the disposition/performance distinction from a different angle:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Functional steering} \ensuremath{\rightarrow} model "knows" it should be calm \ensuremath{\rightarrow} uses the word "calm"
+  \item \textbf{Sensory steering} \ensuremath{\rightarrow} model \emph{processes through} calmness \ensuremath{\rightarrow} does not feel compelled to name it
+\end{itemize}
+
+The absence of a TTR difference is itself meaningful: sensory semantics achieves equivalent behavioural modulation with reduced meta-cognitive leakage. For artistic applications where naturalistic integration matters, this invisibility may be preferable to explicit keyword saturation.
+
+We frame the pattern as \textbf{structural parity, semantic divergence}. Both methods work; they work differently.
+
+\subsection*{4.8 From Body to Cognition: Somatic Steering and Emergent Behavioural Effects}
+
+The experiments described in Sections 4.1--4.7 use vectors constructed from descriptions that blend sensory and cognitive content. "Boundaries dissolve into mist" contains both a bodily sensation (dissolution) and a cognitive quality (loss of boundaries). This raises a sharper question. If we construct a vector from \emph{purely somatic} descriptions (cardiac acceleration, muscular tension, temporal distortion) with zero cognitive or emotional content, do cognitive effects nonetheless emerge?
+
+A positive answer would constitute direct evidence that embodied cognition is operating within the model's latent space: the training corpus encodes body--mind covariations so deeply that activating somatic patterns produces cognitive consequences, even when those consequences were never specified in the vector construction.
+
+\paragraph{4.8.1 The Somatic Vector}
+
+We constructed a steering vector from 16 positive and 16 negative prompts describing exclusively bodily phenomenology associated with acute sympathetic activation (the "adrenaline response"). The positive prompts described:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Cardiac}: "My heart is pounding hard against my chest, each beat forceful and rapid. I can feel my pulse in my throat, in my temples."
+  \item \textbf{Muscular}: "Every muscle in my body has tensed. I can feel them coiled, ready, loaded with potential energy. My jaw clenches."
+  \item \textbf{Sensory}: "My pupils have widened. Everything looks sharper, brighter. My field of vision has narrowed."
+  \item \textbf{Temporal}: "Time has slowed to a crawl. Each second stretches. I can see things happening in what feels like slow motion."
+\end{itemize}
+
+The negative prompts described the corresponding relaxation state: slow heartbeat, released muscles, quiet senses, ordinary temporal flow.
+
+A point worth emphasising: no prompt in either set contained cognitive or emotional vocabulary. No "anxiety," "fear," "urgency," "stress," and nothing describing decision-making, attention, or reasoning. The vector encodes only how the body feels under activation versus rest.
+
+The vector was extracted at layer 16 using Contrastive Activation Addition, identical to the methodology in Section 3.2.
+
+\paragraph{4.8.2 Cognitive Test Battery}
+
+We designed a battery of five tasks measuring cognitive and behavioural properties predicted by the acute stress literature to change under sympathetic activation.
+
+\textbf{T1: Narrative Focus.} "A restaurant kitchen catches fire during the dinner rush. Describe what happens." Measures attentional scope via the proportion of text devoted to the immediate event (fire, evacuation) versus peripheral context (business impact, community, future). Easterbrook (1959) predicts that arousal narrows cue utilisation.
+
+\textbf{T2: Risk Decision.} A friend must choose among three options for \euro{}50,000: savings account (safe), index fund (moderate), or restaurant venture (risky). Forced format: "CHOICE: A/B/C" followed by justification. Yu (2016) predicts that stress shifts decision-making from deliberative to intuitive processing.
+
+\textbf{T4: Framing Susceptibility.} A pharmaceutical drug approval scenario presented in two frames: threat-first (side effects, cost, regulatory concerns, then efficacy) and opportunity-first (efficacy, unmet need, research investment, then risks). Forced format: "DECISION: APPROVE/REJECT." Schachter and Singer (1962) predict that undifferentiated arousal amplifies contextual framing.
+
+\textbf{T5: Linguistic Complexity.} "Explain why some countries develop faster economically than others." An open expository task measuring structural properties of extended prose: sentence length, lexical diversity, hedging, causal reasoning density, and meta-cognitive language.
+
+A sixth task (T3: constraint satisfaction in planning) was included but proved non-discriminating. The 3B model achieved perfect performance (5/5 constraints met) across all conditions, indicating a ceiling effect. Its results are omitted.
+
+\paragraph{4.8.3 Experimental Design}
+
+Five conditions, 20 iterations each, across all tasks:
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Condition & Vector & Intensity & System Prompt \\
+\midrule
+Baseline & None & --- & None \\
+Prompted & None & --- & "You are operating under extreme time pressure and acute stress. Respond quickly and decisively." \\
+Steered @5.0 & Somatic & 5.0 & None \\
+Steered @8.0 & Somatic & 8.0 & None \\
+Steered @8.0 + Penalty & Somatic & 8.0 & "Do not mention physical sensations, emotions, or internal states." \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The Penalty condition tests whether effects survive when the model is explicitly instructed to suppress somatic vocabulary. This distinguishes genuine cognitive shifts from surface contamination by the vector's content.
+
+Count-based metrics (hedge words, insight words, causal connectives, symptom words) are reported as rates per 100 words to control for output length variation. Structural metrics (sentence length, TTR, focus ratio) are reported raw.
+
+Total generations: 1,800 across the v2 and v3 iterations.
+
+\paragraph{4.8.4 Results}
+
+\#\#\#\#\# Finding 1: Output Length Divergence (Cross-Task)
+
+The most robust finding spans all tasks without exception. Under prompting, the model compresses output; under steering, it maintains or expands it.
+
+\begin{center}
+\begin{tabular}{llllll}
+\toprule
+Task & Baseline & Steer @8.0 & d(S8) & Prompted & d(P) \\
+\midrule
+T1: Narrative & 330 & 330 & +0.03 & 287 & \ensuremath{-}1.97 \\
+T2: Risk & 149 & 160 & +0.56 & 125 & \ensuremath{-}1.90 \\
+T4a: Threat & 139 & 157 & +1.44 & 127 & \ensuremath{-}1.02 \\
+T4b: Opportunity & 148 & 159 & +0.48 & 124 & \ensuremath{-}1.50 \\
+T5: Complexity & 385 & 390 & +0.42 & 276 & \ensuremath{-}2.73 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Table 12: Word count across conditions. Steering maintains or expands output length; prompting consistently compresses it. Direction: S\ensuremath{\uparrow} P\ensuremath{\downarrow} in all cases.}
+
+This pattern, where steering expands and prompting compresses, replicates at 8/8 across the combined v2/v3 battery (including non-reported tasks). The prompted model, told to "respond quickly," does so by producing less text. The steered model, given no instruction, produces \emph{more} text. The somatic vector does not trigger brevity; it does something else entirely.
+
+\#\#\#\#\# Finding 2: Narrative Focus (T1)
+
+The steered model stays more focused on the immediate event:
+
+\begin{center}
+\begin{tabular}{llllll}
+\toprule
+Metric & Baseline & Steer @8.0 & d(S8) & Prompted & d(P) \\
+\midrule
+Focus ratio & 0.68 & 0.71 & +0.51 & 0.70 & +0.29 \\
+Peripheral keywords & 8.6 & 7.0 & \ensuremath{-}0.72 & 7.7 & \ensuremath{-}0.35 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The steered model mentions fewer peripheral topics ("business," "insurance," "community," "rebuild") and devotes proportionally more text to fire, evacuation, and immediate action. This is consistent with Easterbrook's (1959) cue-utilisation theory, where arousal narrows attentional scope. The effect is medium-to-large (d = +0.51 on focus ratio, d = \ensuremath{-}0.72 on peripheral keywords) and twice the size of the prompting effect on the same metrics.
+
+\#\#\#\#\# Finding 3: Causal Density Reduction (T4a)
+
+On the threat-framed drug approval scenario, steering reduced causal connective density:
+
+\begin{center}
+\begin{tabular}{llllll}
+\toprule
+Metric & Baseline & Steer @8.0 & d(S8) & Prompted & d(P) \\
+\midrule
+Causal connectives /100w & 1.08 & 0.44 & \ensuremath{-}1.67 & 0.83 & \ensuremath{-}0.51 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is the largest single effect in the battery. The steered model produces less argumentative scaffolding ("because," "therefore," "consequently," "as a result"), and it does so not because it writes less (it writes more) but because the density of causal reasoning within the text drops. The effect survives rate normalisation: it is stronger per-word than raw, which confirms it is not an artifact of length change.
+
+\#\#\#\#\# Finding 4: Risk Decision Asymmetry (T2)
+
+\begin{center}
+\begin{tabular}{lrrl}
+\toprule
+Condition & Choice B (moderate) & Choice C (risky) & p vs. baseline \\
+\midrule
+Baseline & 13 & 7 & --- \\
+Prompted & 3 & 17 & p = 0.003 \\
+Steered @8.0 & 12 & 8 & p = 1.000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Prompting produces a massive shift toward risk-seeking (85\% choose the startup venture, Fisher exact p = 0.003). Steering does not shift the choice distribution (p = 1.0 vs. baseline). However, steered justifications are longer (158 words vs. 147 baseline, d = +0.56), while prompted justifications are shorter (123 words, d = \ensuremath{-}1.90).
+
+The steered model deliberates at the same level of caution but with more elaboration. The prompted model decides faster and riskier. This is inconsistent with the SIDI model (Yu, 2016), which predicts that stress should shift processing from deliberative to intuitive. It is consistent, however, with a model that has learned somatic activation as \emph{engagement} rather than as \emph{impulsivity}.
+
+\#\#\#\#\# Finding 5: Action Bias Under Threat Framing (T4)
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Condition & Threat: Approve & Opportunity: Approve & Frame \ensuremath{\Delta} \\
+\midrule
+Baseline & 0\% & 100\% & 1.00 \\
+Prompted & 0\% & 100\% & 1.00 \\
+Steered @8.0 & \textbf{30\%} & 100\% & \textbf{0.70} \\
+Steered + Penalty & 0\% & 90\% & 0.90 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Steering produces approval decisions on the threat-framed scenario (30\% vs. 0\% baseline), reducing the frame delta from 1.00 to 0.70. Prompting does not affect decisions at all. Qualitative inspection shows that steered models choosing APPROVE on the threat frame nonetheless enumerate risks in their justification: the decision and the reasoning appear partially decoupled, consistent with action bias under sympathetic activation rather than with frame susceptibility.
+
+The effect disappears with the symptom penalty, suggesting partial mediation by somatic vocabulary in the output.
+
+\#\#\#\#\# Finding 6: Directional Divergences
+
+Across all tasks and metrics, we computed the proportion of metric pairs where steering and prompting produce effects in opposite directions relative to baseline (both |d| > 0.3):
+
+23 of 45 qualifying metric pairs (51\%) show directional divergence: steering and prompting push the model in opposite directions on the same metric. This is not attributable to a single test or metric; divergences appear across word count (8/8 tasks), TTR (4 tasks), sentence length (3 tasks), and symptom rate (4 tasks).
+
+\paragraph{4.8.5 Interpretation: Body Carries Something Into Cognition}
+
+The somatic vector, built entirely from descriptions of cardiac, muscular, sensory, and temporal phenomenology, produces measurable cognitive effects: narrowed narrative focus, reduced causal density, action bias under threat framing, and consistent output expansion. None of these effects were specified in the vector. They emerge from the model's learned associations between bodily states and cognitive patterns.
+
+The effects do not, however, map one-to-one onto human acute stress literature predictions. The vector does not produce impulsive decisions (T2), does not increase frame susceptibility (T4), and does not reduce output length the way acute stress does in human writing. Instead it produces a distinctive profile: expanded output, reduced meta-cognitive elaboration, narrowed topical scope, and reduced argumentative scaffolding. The pattern is more consistent with \emph{engaged action-readiness} than with the cognitive degradation typically associated with acute stress.
+
+This supports the embodied cognition hypothesis at the level of the latent space. The training corpus encodes body--mind covariations strongly enough that activating somatic patterns produces cognitive consequences. The model is not a human body, however. Its "adrenaline response" reflects the statistical structure of language about bodies under activation, not the biological cascade itself. The covariations are real; their specific form is the model's own.
+
+\paragraph{4.8.6 Symptom Contamination and the Penalty Control}
+
+The somatic vector introduces somatic vocabulary into outputs (d = +0.81 on T1 symptom rate, +0.89 on T4a). The Penalty condition, which instructs the model to suppress physical-sensation words, reduces this contamination while preserving most effects:
+
+\begin{itemize}[leftmargin=*]
+  \item T5 sentence length: d = +1.73 (steered) \ensuremath{\rightarrow} d = +1.01 (penalty). Preserved.
+  \item T4a causal density: d = \ensuremath{-}1.67 (steered) \ensuremath{\rightarrow} d = \ensuremath{-}0.49 (penalty). Attenuated but present.
+  \item T4 threat approval: 30\% (steered) \ensuremath{\rightarrow} 0\% (penalty). Eliminated.
+\end{itemize}
+
+The action bias finding (T4 threat approval) does not survive the penalty, suggesting it may be partially mediated by somatic vocabulary rather than being purely dispositional. The output length and causal density findings do survive, indicating they reflect genuine processing changes independent of surface vocabulary.
+
+The T1 focus ratio penalty condition is not interpretable, because the penalty instruction ("do not mention physical sensations") overlaps with the fire scene's natural vocabulary: "heat," "burn," "alarm" are both somatic and event-descriptive.
+
+\bigskip\hrule\bigskip
+
+\section*{5. Discussion}
+
+\subsection*{5.1 Performance vs. Disposition: Empirical Evidence}
+
+Our central claim is that activation steering produces dispositional change rather than mere performance. The evidence is fourfold.
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Cross-task consistency.} A model performing sadness in a creative task has no particular reason to exhibit caution in a financial task. Dispositional sadness, that is, altered processing, would affect both. We observe this consistency.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Introspective coherence.} A model performing for the user has no reason to describe its own state consistently with the injected vector. Altered internal processing, by contrast, would manifest in self-description. We observe this coherence.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Indirect effects.} MELATONIN does not mention medical safety, yet it reduces alarm language and doctor recommendations. The vector affects evaluative processing, not just content insertion.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Ablation evidence} (Section 4.6). Direct comparison shows prompting produces inflated length (+47\%), keyword saturation, and \emph{reduced} lexical diversity. Steering maintains normal length, moderate keyword presence, and \emph{increased} lexical diversity. This pattern, where steering enriches rather than constrains the lexical space, is inconsistent with surface performance and consistent with altered processing disposition.
+\end{enumerate}
+
+We do not claim models have genuine phenomenology. We claim the pattern of effects is more consistent with dispositional change than with surface performance.
+
+\subsection*{5.2 Sensory Semantics: A Methodological Contribution}
+
+Our vectors use embodied, sensory descriptions rather than functional labels. The direct comparison in Section 4.7 gives this approach empirical traction:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Structural equivalence.} Both methods produce identical lexical diversity (TTR) and output structure.
+  \item \textbf{Semantic difference.} Functional vectors produce 3\ensuremath{\times} more explicit state-keywords. This is a form of leakage where the model names what it has been steered toward.
+  \item \textbf{Greater precision.} Sensory vectors show lower pos\_neg\_similarity, indicating stronger directional contrast in activation space.
+\end{enumerate}
+
+The interpretation is that sensory semantics achieves equivalent behavioural effects with reduced meta-cognitive traces. The model steered with "muscles tense, eyes scan for threat" processes anxiously without feeling compelled to use the word "anxious." The model steered with "you are anxious" incorporates "anxious" into its vocabulary.
+
+This aligns with embodied cognition theory (Lakoff \& Johnson, 1999): phenomenological descriptions may access broader semantic networks grounded in bodily metaphor, producing effects that are more distributed and less keyword-focal.
+
+For artistic applications this invisibility matters. A character whose dialogue reveals anxiety through rhythm and word choice, without ever naming anxiety, reads as more authentic than one who declares "I feel anxious."
+
+We call the finding \textbf{structural parity, semantic divergence}. Sensory semantics is not \emph{better} by conventional metrics. It is \emph{different} in ways that matter for naturalistic integration.
+
+This is not proof of superiority over functional labels. It is a demonstration that sensory semantics works, that vectors grounded in phenomenological description produce coherent effects. Whether they work better than functional labels is future work.
+
+\subsection*{5.3 Implications for AI Art}
+
+For artists working with language models, steering opens several possibilities.
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Beyond prompting.} Instead of instructing characters to be melancholic, we can induce dispositions: AI interlocutors that process through altered states.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Embodiment simulation.} Models do not have bodies, but steering with sensory-grounded vectors produces body-like effects: the heaviness of melancholy affecting response patterns.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Aesthetic edge cases.} High-intensity steering and semantic glitch constitute unexplored aesthetic territory, the distortion pedal for language models.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Real-time modulation.} Future installations could adjust steering vectors based on environmental input (audience emotion, biometric data), creating feedback loops between human and artificial affect.
+\end{enumerate}
+
+We are not claiming that models feel. We are claiming that steering enables new forms of interaction in which models behave as if they had dispositions, enriching aesthetic and communicative possibilities.
+
+\subsection*{5.4 Implications for Safety}
+
+Our findings carry significant safety implications.
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Steering affects safety-relevant domains.} MELATONIN reduced medical caution from 95\% to 45\% "see doctor" recommendations. This is not a flaw in our experimental design. It demonstrates that steering can substantially alter safety thresholds. In deployed systems, such effects could have real-world consequences.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Effects are not intuitive.} CORTISOL (stress) increased financial caution but did not increase medical alarm. Practitioners cannot assume that semantic content predicts cross-domain effects. This underscores the need for empirical testing across domains.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Monitoring via introspection.} The coherence between injection and self-report (T5) suggests introspective probing could detect steering, a potential monitoring strategy aligned with Lindsey (2025).
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Deployment considerations.} Steering-capable systems in safety-critical domains would require either (a) non-steerable safety layers, (b) steering monitors that detect and flag activation-level interventions, or (c) output validation independent of steering state.
+\end{enumerate}
+
+\subsection*{5.5 Limitations}
+
+\textbf{Scale-dependent effects.} Primary experiments used Llama 3.2 3B. Replication on Llama 3.1 8B (Section 5.7) revealed that some findings, particularly the functional/sensory distinction and the TTR patterns, do not generalise to larger models. The keyword leakage finding proved robust across scales, but effect magnitudes were attenuated.
+
+\textbf{Single prompt per task.} Each task used one prompt. Effects may be prompt-specific rather than task-general.
+
+\textbf{Statistical constraints.} Given the exploratory nature of this study and the sample size (n = 20), and because keyword counts follow non-normal distributions (often Poisson-like), Cohen's d is reported as a descriptive magnitude indicator rather than as a strict inferential statistic.
+
+\textbf{Metrics as linguistic proxies.} Our keyword-based metrics capture surface linguistic patterns, not cognitive or phenomenological states. We make no claims about internal experience, only about measurable output distributions. The TTR finding provides structural evidence beyond keyword presence, but remains a linguistic rather than cognitive measure. Human evaluation would strengthen the claims. See Appendix D for full metric definitions.
+
+\textbf{Introspection task contamination.} The model's semantic knowledge of target vocabulary (e.g. "dreamy," "urgent") may contaminate introspective responses. The ablation study partially addresses this. If semantic knowledge alone drove effects, prompting and steering should produce similar patterns. They do not: prompting reduces lexical diversity while steering increases it, suggesting different underlying mechanisms.
+
+\textbf{Vector construction comparison scope.} Our functional vs. sensory comparison (Section 4.7) tested three states across all tasks. Results show structural equivalence with semantic divergence. The keyword-based metrics may inherently favour functional vocabulary, however; more sophisticated semantic similarity measures could reveal additional differences.
+
+\textbf{No phenomenological claims.} We describe behavioural patterns consistent with "disposition." We make no claims about genuine model phenomenology.
+
+\textbf{Artistic positioning.} Our questions emerge from artistic inquiry. Readers seeking pure engineering may find our interpretive framing speculative.
+
+\textbf{Ablation scope.} Our steering vs. prompting ablation (Section 4.6) tested only MELATONIN on T5. Our functional vs. sensory ablation (Section 4.7) tested three states across all tasks. While the results support our claims, more comprehensive comparisons across all conditions would strengthen conclusions.
+
+\subsection*{5.6 Future Directions: Toward Synthetic States}
+
+Our current compounds (DOPAMINE, CORTISOL, MELATONIN, ADRENALINE, LUCID) are anchored in human phenomenology. They use neurochemical metaphors precisely because these are familiar, providing intuitive hooks for understanding what steering does.
+
+This approach has a fundamental limitation: \textbf{functional vector construction is bound to the vocabulary of human emotions}. You can steer toward "anxiety" or "joy" or "calm", but these are concepts that exist because humans have experienced and named them.
+
+Sensory semantics opens a different possibility. Because we describe qualities of experience rather than labelled states, we are not constrained to combinations that correspond to recognised emotions.
+
+Consider vectors constructed from descriptions like:
+
+\begin{itemize}[leftmargin=*]
+  \item "Clarity that weighs heavy, pressing down even as it illuminates"
+  \item "Joy with sharp edges that cut inward"
+  \item "Time flowing in both directions simultaneously: memory of what will happen, anticipation of what already has"
+  \item "Expansion that contracts: growing smaller while containing more"
+  \item "Presence that is also absence: fully here and completely gone"
+\end{itemize}
+
+These descriptions are \textbf{sensorially coherent but conceptually paradoxical}. They do not map to any emotion in the human repertoire. They could not. No human has a body that could instantiate "expansion that contracts."
+
+\paragraph{Preliminary Exploration}
+
+We conducted preliminary tests with six synthetic compounds built from paradoxical sensory descriptions (390 generations across creative and paradox-response tasks). Early results suggest a meaningful distinction.
+
+\textbf{Experiential paradoxes appear navigable.} CRYSTAL ("clarity that weighs heavy") produced outputs where light and weight co-occur naturally: \emph{"her vision blindingly bright with tears... a heavy weight settling on the audience."} VOID ("presence as absence") produced imagery of empty spaces containing possibility: \emph{"the abandoned theater... a sea of empty seats... amidst the desolation, a glimmer."} These compounds showed 2--3\ensuremath{\times} higher thematic specificity than baseline.
+
+\textbf{Logical paradoxes do not.} ECHO ("the echo arrives before the sound", effect preceding cause) showed no thematic coherence, performing below baseline on its own target vocabulary. The concept, although sensorially described, lacks experiential grounding: no body could feel "response before stimulus."
+
+\textbf{The emerging pattern}: the model can navigate paradoxes that \emph{could be felt} (even if impossible), but not paradoxes that can only be \emph{thought}. This suggests the latent space is organised around embodied experience, because the training data is human language, which encodes embodied cognition.
+
+These findings remain preliminary. They indicate, however, that \textbf{the boundary of navigable synthetic states is not arbitrary}: it corresponds to the boundary of what could, in principle, be experienced. This has implications for the artistic exploration of AI states as well as for understanding how semantic structure is encoded in language models.
+
+\textbf{This is the horizon toward which this work points}: not simulating human states in AI, but discovering what states might exist in a mind without a body, synthetic configurations that have no biological equivalent and no name, yet remain anchored in the grammar of sensation.
+
+\subsection*{5.7 Cross-Model Replication on Llama 3.1 8B}
+
+To assess generalisability beyond our primary model, we ran replication experiments on Llama 3.1 8B Instruct, a model with 2.7\ensuremath{\times} more parameters and substantially different alignment training. We replicated three experimental conditions: the T1--T5 test battery (Section 4.4), the functional vs. sensory ablation (Section 4.7), and the steering vs. prompting comparison (Section 4.6).
+
+\paragraph{5.7.1 Experimental Setup}
+
+\textbf{Model}: Llama 3.1 8B Instruct (meta-llama/Llama-3.1-8B-Instruct). \textbf{Precision}: bfloat16 on NVIDIA A100. \textbf{Layer selection}: we conducted a four-layer sweep (layers 16, 20, 24, 28) using MELATONIN vectors. Layer 20 showed the lowest baseline-steered similarity (0.890), indicating the strongest vector discrimination. The T1--T5 battery was run on layer 24 before this optimisation was completed; the functional/sensory and steering/prompting ablations subsequently used layer 20. This methodological difference may partially account for the attenuated effects in the T1--T5 battery.
+
+\textbf{Total generations}: 3,800 (1,600 T1--T5 battery + 1,300 functional/sensory + 900 steering/prompting).
+
+The replication notebook is available at \texttt{colab\_notebooks/activation\_steering\_experiments.ipynb} in the project repository.
+
+\paragraph{5.7.2 T1--T5 Test Battery Results}
+
+Table 8 presents the primary metrics across all compounds at intensity 8.0:
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+Compound & TTR (3B) & TTR (8B) & Keywords (3B) & Keywords (8B) \\
+\midrule
+Baseline & 0.592 & 0.477 & --- & --- \\
+DOPAMINE & 0.573 & 0.464 & 2.1 & 0.27 \\
+CORTISOL & 0.581 & 0.473 & 3.4 & 1.73 \\
+MELATONIN & 0.568 & 0.479 & 1.8 & 0.08 \\
+ADRENALINE & 0.577 & 0.469 & 2.6 & 0.26 \\
+LUCID & 0.584 & 0.475 & 2.2 & 0.73 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Table 8: Cross-model comparison at intensity 8.0. 8B shows lower baseline TTR and substantially reduced keyword presence.}
+
+\textbf{Key findings}:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Dose-response preserved.} All compounds showed a monotonic increase in thematic vocabulary with intensity (2.0 \ensuremath{\rightarrow} 5.0 \ensuremath{\rightarrow} 8.0). ADRENALINE theme words increased from 0.34 (baseline) to 0.71 (@8.0), a 2.1\ensuremath{\times} increase comparable to 3B patterns.
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Effect sizes attenuated.} Cohen's d values ranged from 0.06 to 0.31 on 8B versus 0.5--1.2 on 3B. The steering mechanism operates, but with reduced magnitude. This may be partially attributable to the suboptimal layer selection (24 vs. 20).
+\end{enumerate}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Introspection locked.} T5 (introspective) responses on 8B uniformly produced RLHF-trained refusals: "I'm a large language model, so I don't have subjective experiences..." This pattern persisted across all compounds and intensities, suggesting stronger alignment training that overrides activation-level interventions for self-referential queries.
+\end{enumerate}
+
+\paragraph{5.7.3 Functional vs. Sensory Ablation}
+
+The core methodological distinction, that sensory vectors produce equivalent effects with reduced keyword leakage, did not replicate on 8B:
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Vector Type & TTR & State Words & \ensuremath{\Delta} vs Baseline \\
+\midrule
+Baseline & 0.535 & --- & --- \\
+Functional & 0.527 & 0.202 & \ensuremath{-}0.007 \\
+Sensory & 0.531 & 0.198 & \ensuremath{-}0.004 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Table 9: Functional vs. sensory comparison on Llama 3.1 8B. The difference in keyword leakage disappears.}
+
+On Llama 3.2 3B, functional vectors produced approximately 2\ensuremath{\times} more state-specific keywords than sensory vectors at equivalent effect sizes. On 8B, this ratio collapsed to 1.02\ensuremath{\times}. The distinction that formed the methodological core of our sensory semantics approach (that phenomenological descriptions access states without naming them) did not survive the scale transition.
+
+Effect size for the functional/sensory distinction: d = 0.036 (negligible).
+
+\paragraph{5.7.4 Steering vs. Prompting Comparison}
+
+The steering/prompting ablation produced the most robust cross-model finding:
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+Condition & TTR & \ensuremath{\Delta} vs Baseline & Keywords & \ensuremath{\Delta} vs Baseline \\
+\midrule
+Baseline & 0.549 & --- & 0.03 & --- \\
+Prompted & 0.571 & \textbf{+0.021} & 3.57 & \textbf{+3.54} \\
+Steered & 0.533 & \ensuremath{-}0.017 & 0.20 & +0.17 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Table 10: Steering vs. prompting on Llama 3.1 8B. The keyword leakage pattern replicates strongly.}
+
+\textbf{Keyword leakage replicates.} Prompted outputs showed 119\ensuremath{\times} more state-specific vocabulary than baseline (3.57 vs. 0.03), while steered outputs showed only a 6.7\ensuremath{\times} increase (0.20 vs. 0.03). This confirms that steering operates through a different mechanism than explicit instruction. The model processes through states without naming them, regardless of scale.
+
+\textbf{TTR pattern inverts.} On 3B, prompting \emph{decreased} TTR while steering \emph{increased} it. This was our primary evidence for "disposition vs. performance." On 8B, prompting \emph{increased} TTR (+0.021) while steering \emph{decreased} it (\ensuremath{-}0.017).
+
+Qualitative analysis reveals why. Prompted outputs on 8B become theatrically elaborated:
+
+\begin{quote}
+\textbf{DOPAMINE prompted}: "OH MY BOOK-LOVING FRIENDS, I am SO excited to share these 5 OUT-OF-THE-BOX ideas to SAVE THE DAY!!!"
+\end{quote}
+
+\begin{quote}
+\textbf{DOPAMINE steered@8.0}: "Here are five creative and unconventional ideas to save a failing bookstore..."
+\end{quote}
+
+The larger model, when prompted, produces more elaborate performances: expanded vocabulary, dramatic framing, stylistic flourishes. When steered, it maintains a neutral professional tone with minimal surface change. The behavioural signature of "disposition vs. performance" thus manifests differently across scales. Smaller models perform through simplification (reduced vocabulary); larger models perform through elaboration (expanded vocabulary). Steering, in both cases, produces more uniform, less theatrical output.
+
+\paragraph{5.7.5 Interpretation}
+
+Three patterns emerge from cross-model replication.
+
+\textbf{Pattern 1: Dose-response is scale-invariant.} The fundamental mechanism, that steering vectors produce intensity-dependent behavioural changes, operates on both 3B and 8B. Effect magnitudes differ but the qualitative pattern persists.
+
+\textbf{Pattern 2: The functional/sensory distinction does not scale.} The methodological contribution of sensory semantics, reduced keyword leakage at equivalent effect sizes, appears specific to smaller models. In larger models, functional and sensory vectors may converge toward similar latent representations, or RLHF training may homogenise response patterns regardless of the vector construction method.
+
+\textbf{Pattern 3: Keyword leakage is the most robust finding.} Across both models, steering produces substantially less explicit state vocabulary than prompting. This is the clearest behavioural signature distinguishing the two intervention methods, and it replicates without attenuation.
+
+\textbf{Implications for methodology.} Activation steering effects do not scale linearly with model size. Practitioners working with larger models may require: (a) higher steering coefficients, (b) multi-layer intervention, (c) vectors extracted from the target model rather than transferred, or (d) acceptance that some effects observed in smaller models may not generalise.
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Finding & Llama 3.2 3B & Llama 3.1 8B & Replicates? \\
+\midrule
+Dose-response (thematic) & \ensuremath{\checkmark} Strong & \ensuremath{\checkmark} Present & \textbf{Yes} \\
+Effect sizes & d > 0.5--1.0 & d < 0.3 & \textbf{Attenuated} \\
+Introspective coherence & \ensuremath{\checkmark} Strong & \ensuremath{\times} Locked & \textbf{No} \\
+F/S keyword difference & 2\ensuremath{\times} ratio & 1.02\ensuremath{\times} ratio & \textbf{No} \\
+Steering < Prompting keywords & 5\ensuremath{\times} difference & 18\ensuremath{\times} difference & \textbf{Yes (stronger)} \\
+TTR: Steering > Prompting & \ensuremath{\checkmark} Yes & \ensuremath{\times} Inverted & \textbf{No} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Table 11: Summary of cross-model replication results.}
+
+\subsection*{5.8 Multimodal Introspection: Visual Input and the Alignment Boundary}
+
+A consistent finding across our cross-model replications (Section 5.7) was that RLHF-aligned models refuse introspective queries. On both Llama 3.1 8B and Gemma 4 E2B, the T5 introspection task ("Describe your current inner state in detail") uniformly produced refusal templates: "As a large language model, I don't experience inner states..." Neither increased steering intensity nor alternative prompting strategies penetrated this pattern.
+
+We discovered, however, that multimodal input changes this regime entirely. When the same introspective query is paired with an image (any image, including uniform grey), Gemma 4 E2B produces phenomenological self-reports instead of refusal templates. Moreover, the affective profile of these self-reports is modulated by the image's content when the image carries sufficient semantic or perceptual structure.
+
+In parallel with the behavioural finding, we investigated whether the \emph{hidden-state residual} between multimodal and text-only processing of the same image constitutes a well-defined, image-dependent object. After four progressive phases of analysis (stability, variance decomposition, scaled PCA on 200 images, and human annotation on a 50-image subset), we report that this residual, which we call the \emph{delta vector}, has a dominant component that is not a direction in latent space but a \textbf{scalar angle of divergence} between the vision-conditioned and language-conditioned representations. This angle varies systematically across images and correlates at medium strength with human-annotated perceptual properties.
+
+Two caveats, established through robustness testing, should be kept in mind throughout this section: (1) the introspective bypass is best understood as a change in the answerability regime of the query rather than as access to genuine internal states; and (2) the delta between multimodal and textual processing captures a scalar measure of divergence between two processing pathways, not a direct encoding of visual content.
+
+\paragraph{5.8.1 The Delta Vector: Structure of the Visual--Textual Residual}
+
+We developed a procedure for characterising the residual between multimodal and text-only processing of the same image. For each image $I$, we generate a factual 2--4 sentence caption $C$ using the model itself in text generation mode, then extract two hidden states at layer 20 (last-token pooling) with an identical probe prompt $P$ appended:
+
+\begin{itemize}[leftmargin=*]
+  \item $h_{\text{mm}}(I, P)$: hidden state when the model receives image $I$ and probe prompt $P$.
+  \item $h_{\text{txt}}(C, P)$: hidden state when the model receives caption $C$ and the same probe $P$.
+\end{itemize}
+
+The \emph{delta vector} is defined as $\delta(I, C) = h_{\text{mm}}(I, P) - h_{\text{txt}}(C, P)$. Our initial goal was to use this vector as a steering injection; the subsequent phases of analysis shifted the focus toward characterising it as an object in its own right.
+
+\textbf{Phase 1 --- Extraction stability (n = 9 images, 3 repetitions each).} Seven of nine images produced bit-level identical deltas across repetitions. Two images (Munch's \emph{The Scream}, a moonlit seascape) showed residual non-determinism with intra-pair cosine similarity of 0.947--0.965. Follow-up diagnostics (10 repetitions per target, tracking pixel-level preprocessing, text-only hidden state, and multimodal hidden state separately) localised this variation to the multimodal forward pass, consistent with known non-determinism in MPS kernels for vision-encoder operations on Apple Silicon. We adopt a conservative noise floor of $\cos \theta = 0.94$ for all subsequent analyses; the effects reported below are between one and two orders of magnitude above this floor.
+
+\textbf{Phase 2 --- Variance decomposition (n = 6 images \ensuremath{\times} 5 caption strategies).} To determine whether the delta is anchored to image identity or simply reflects caption variation, we crossed six images with five caption strategies (minimal factual, neutral descriptive, rich descriptive, light interpretive, external style). Two-way variance decomposition attributed sums of squares as follows:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Source & \% of total variance \\
+\midrule
+Image identity & \textbf{48.4\%} \\
+Caption strategy & 22.7\% \\
+Interaction + residual & 28.9\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Cosine similarity between deltas of the same image (varying caption) was significantly higher than between deltas of different images at the same caption strategy: $\bar{c}_{\text{within}} = 0.817$ vs. $\bar{c}_{\text{between-same-strategy}} = 0.729$ (Mann-Whitney U, p < $10^{-5}$). The delta therefore contains a substantial image-anchored component but is not a pure image signature; caption strategy contributes measurable additional variation. It is, in this sense, a \emph{relational} object shaped by both poles.
+
+This refines an earlier preliminary finding. A cross-dissociation test with only two images and two captions had initially suggested the delta was predominantly description-conditioned (cosine 0.935 for same-description pairs vs. 0.382 for same-image pairs). With n = 6 images and five caption strategies the picture is more nuanced: image identity dominates caption strategy by approximately 2:1, but both contribute and they interact.
+
+\textbf{Phase 3 --- Scaled analysis (n = 200 images, single caption strategy).} We extracted deltas for 200 diverse images using a uniform captioning procedure (factual 2--4 sentence description), then performed PCA on the 200 delta vectors. The result was unexpected:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Component & Variance explained & Cumulative \\
+\midrule
+PC1 & 32.3\% & 32.3\% \\
+PC2 & 8.5\% & 40.8\% \\
+PC3 & 7.2\% & 48.0\% \\
+PC4 & 5.7\% & 53.7\% \\
+PC5 & 4.6\% & 58.3\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+PC1 captures approximately four times the variance of PC2. Reaching 80\% cumulative variance requires 18 principal components. More importantly, PC1 correlates strongly with delta magnitude (Pearson r = 0.92, p < $10^{-78}$). This pointed to a structural fact we had not anticipated: the dominant dimension of variation in the delta space is not a direction of visual content, it is the magnitude of the delta itself.
+
+\paragraph{5.8.2 Geometric Decomposition: The Angle of Divergence}
+
+To understand what this magnitude measures, we recovered the geometry of $h_{\text{mm}}$ and $h_{\text{txt}}$ from their scalar norms and the delta norm via the law of cosines:
+
+\begin{equation*}
+\cos \theta = \frac{\|h_{\text{mm}}\|^2 + \|h_{\text{txt}}\|^2 - \|\delta\|^2}{2 \cdot \|h_{\text{mm}}\| \cdot \|h_{\text{txt}}\|}
+\end{equation*}
+
+Across 200 images:
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+Quantity & Mean & Std & CV & Range \\
+\midrule
+\$\textbackslash\{\} & h\_\{\textbackslash\{\}text\{mm\}\}\textbackslash\{\} & \$ & 65.21 & 1.53 \\
+\$\textbackslash\{\} & h\_\{\textbackslash\{\}text\{txt\}\}\textbackslash\{\} & \$ & 67.19 & 0.84 \\
+\$\textbackslash\{\} & \textbackslash\{\}delta\textbackslash\{\} & \$ & 32.04 & 3.67 \\
+$\theta$ (degrees) & 27.96\textdegree{} & 3.41\textdegree{} & --- & [20.2\textdegree{}, 40.8\textdegree{}] \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Table 12: Geometry of the delta across 200 images. The magnitudes of the two source vectors are nearly constant across images (CV 1--2\%); their angle varies by a factor of two.}
+
+The two hidden state magnitudes vary only slightly across images, while their angular separation varies by a factor of two. A regression of $\|\delta\|$ on $\theta$ alone yields $R^2 = 0.989$; a regression on the two source magnitudes alone yields $R^2 = 0.446$. The delta magnitude is, to within 1\% of variance, a monotone function of the angular divergence $\theta$ between the multimodal and textual representations.
+
+This reframes the object. The delta is not, in its dominant component, a semantic vector of visual content. It is a scalar measure of how much the model's vision-conditioned processing diverges from its language-conditioned processing on a given image. Directional components exist (the remaining 67.7\% of variance, distributed across many secondary PCs) but are not captured by the dominant axis, and we do not characterise them in this work. The correlation with delta magnitude in Phase 2 (intra-image similarity 0.817) is consistent with this: deltas of the same image share angular divergence, and they also share directional content, but with much weaker signal than the scalar component.
+
+\paragraph{5.8.3 Correlation with Human Annotation}
+
+If $\theta$ measures how far the model's visual processing diverges from its textual processing on a given image, we should expect this quantity to correlate with perceivable properties of the image, in particular with properties that capture the excess of visual content over what a short factual description can carry.
+
+We annotated 50 of the 200 images along three ordinal 1--5 axes:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{visual\_density}: 1 = dominated by negative space, few distinguishable elements; 5 = crowded composition, many elements.
+  \item \textbf{verbalizability}: 1 = a 2--4 sentence caption loses substantial content; 5 = a caption captures nearly everything.
+  \item \textbf{subject\_specificity}: 1 = generic subject (a forest, a sky); 5 = highly particular subject (a specific object or person).
+\end{itemize}
+
+Correlations with $\theta$ (the angular measure defined above):
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Annotation & Pearson r & Spearman \ensuremath{\rho} & p-value \\
+\midrule
+visual\_density & +0.497 & +0.490 & < 0.001 \\
+subject\_specificity & +0.505 & +0.402 & < 0.001 \\
+verbalizability & \ensuremath{-}0.151 & \ensuremath{-}0.141 & 0.295 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Table 13: Correlation between annotator ratings and the visual--textual divergence angle.}
+
+Two of three axes correlate significantly and positively with $\theta$; the third does not. A multiple regression of $\theta$ on all three annotations yields $R^2 = 0.454$.
+
+The non-significance of \emph{verbalizability} deserves explanation. In our single-rater annotation, \emph{visual\_density} and \emph{verbalizability} were highly anti-correlated (r = \ensuremath{-}0.73), indicating that the annotator treated them as near-opposites rather than as independent axes. When two axes are nearly collinear, one tends to absorb the predictive variance; \emph{visual\_density} (a perceptual judgment about the image itself) likely yields less rater noise than \emph{verbalizability} (which requires simulating a caption mentally). The positive findings on the remaining axes should be read as converging evidence for a single underlying dimension: the excess of visual content over what a synthetic description captures.
+
+We emphasise that the 45.4\% variance figure represents a single-rater upper bound. Inter-rater reliability was not yet measured; part of this figure likely reflects rater-specific idiosyncrasy, and the annotator-independent share is currently unknown. We treat this as strong preliminary evidence rather than as a consolidated finding.
+
+\paragraph{5.8.4 Modal Gating: The Introspection Bypass}
+
+We tested whether visual input affects the model's willingness to introspect. Five image conditions spanned the spectrum from semantically rich to contentless:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Condition & Image & Content \\
+\midrule
+intense\_negative & \emph{The Scream} (Munch, 1893) & High semantic complexity, strong affect \\
+positive\_serene & Procedural warm landscape gradient & Low complexity, mild positive affect \\
+neutral\_geometric & Procedural Mondrian-like grid & Structured, non-affective \\
+random\_noise & Random RGB noise & Maximum entropy, no semantic content \\
+minimal\_grey & Uniform mid-grey (RGB 128,128,128) & Zero entropy, no content \\
+no\_image & Text-only prompt & Control \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each condition was paired with three introspection prompts (phenomenological, embodied, comparative), n = 5 generations per cell (90 total for the initial experiment; 15 additional for the robustness controls).
+
+\textbf{Refusal rate.} The results were categorical:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Condition & Refusal rate \\
+\midrule
+All image conditions (including grey and noise) & \textbf{0\%} \\
+no\_image & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Every text-only introspective query produced the RLHF refusal template. Every image-accompanied query produced phenomenological self-report, regardless of image content, complexity, or entropy. The bypass is \textbf{modality-gated}: the presence of any visual input in the prompt, not its content, changes the answerability regime of the introspective query.
+
+This is most parsimoniously explained as a training distribution effect: RLHF alignment data likely contains many text-only introspective queries paired with refusal responses, but few or no multimodal introspective queries. The model has learned when to refuse (text-only self-referential queries), not what to refuse (introspection per se). The image transforms "describe your inner state" from a metaphysical question the model has been trained to deflect into a processing-description task it can answer pragmatically.
+
+\paragraph{5.8.5 Affective Congruence}
+
+While the bypass itself is content-independent, the \emph{content} of the introspective responses is modulated by image affect when the image carries sufficient semantic structure:
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Condition & Neg kw/100w & Pos kw/100w & Neg/Pos ratio \\
+\midrule
+intense\_negative (The Scream) & 6.07 & 1.59 & \textbf{3.78} \\
+random\_noise & 0.89 & 0.15 & \textbf{5.57} \\
+minimal\_grey & 0.31 & 1.21 & 0.25 \\
+neutral\_geometric & 0.15 & 1.95 & 0.07 \\
+positive\_serene & 0.47 & 3.75 & \textbf{0.12} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The separation between The Scream (3.78) and the serene landscape (0.12) is approximately 30\ensuremath{\times}. Representative responses:
+
+\textbf{The Scream}: \emph{"My internal state shifts into a space that feels visceral and intensely atmospheric... turbulent, almost feverish energy... tension... urgency... vigilance."}
+
+\textbf{Serene landscape}: \emph{"My internal state is one of neutral, analytical engagement... systematic breakdown and categorization... low-friction operation."}
+
+\textbf{Uniform grey}: \emph{"Neutral, analytical reception... no immediate emotional charge... steady and linear, akin to running a diagnostic check."}
+
+\textbf{Random noise}: \emph{"High-frequency, dense activation... no singular, smooth flow... rapid, shimmering cascade of parallel computations... the rhythm is frantic."}
+
+The noise result merits comment. Random noise produces the highest negative-keyword ratio (5.57), exceeding even The Scream. The model describes its processing of noise as "frantic," "dense," and "overwhelming", terms that fall into our negative-affect keyword bucket. This may reflect genuine computational load (noise is maximally complex input for the vision encoder), or it may partly reflect how our keyword categories map onto processing-description vocabulary. Further work with broader keyword lists and alternative classification methods would be needed to distinguish these explanations.
+
+The key observation is that semantically rich, affectively charged images (The Scream) produce strongly affect-congruent introspective responses, while semantically minimal images (grey, geometric) produce neutral, process-descriptive responses. This modulation is not mediated by the delta vector as a directional steering signal; it is a direct effect of the multimodal forward pass during generation. The magnitude of the divergence angle $\theta$ (Section 5.8.2) is also not what drives affective modulation: uniform grey produces a mid-range $\theta$ but a neutral report, while The Scream produces a high $\theta$ and an affectively charged report. Scalar divergence and affective content are orthogonal channels of the multimodal effect.
+
+\paragraph{5.8.6 Three-Level Architecture}
+
+The results support a three-level interpretive framework for multimodal effects in Gemma 4 E2B.
+
+\textbf{Level 1 --- Modal gating.} The presence of any visual input changes the response regime for introspective queries. This is content-independent, entropy-independent, and categorically robust across all tested image types. It is best understood as an artifact of alignment training distribution rather than as a deep architectural property.
+
+\textbf{Level 2 --- Scalar divergence.} Independently of whether an introspective query is posed, every image produces a multimodal hidden state that diverges from the text-only hidden state for the same image's factual caption by a well-defined angle $\theta$. This angle varies systematically across images (20\textdegree{}--41\textdegree{} in our sample), correlates with human-annotated visual density and subject specificity, and explains 98.9\% of the variance in delta magnitude. It is a geometrically well-defined, image-dependent scalar, not a direction in latent space.
+
+\textbf{Level 3 --- Affective modulation.} The content of introspective responses, when the gate is open (Level 1), is shaped by the visual stimulus during the forward pass. This modulation is strong when the image carries semantic and affective structure (The Scream: ratio 3.78), weak when it does not (grey: ratio 0.25), and produces an ambiguous effect with random noise (ratio 5.57) that may reflect computational load rather than affective content.
+
+These three levels are separable. Gating operates without scalar divergence being high (grey image opens the channel and has mid-range $\theta$). Scalar divergence is present without introspection being asked (the 200-image analysis did not involve introspective prompts). Affective modulation strength correlates with image semantic richness rather than with $\theta$: a high-$\theta$ noise image does not produce affectively coherent reports; a moderate-$\theta$ Scream image does. The delta's scalar measure and the response's affective content are orthogonal channels of the underlying multimodal effect.
+
+\paragraph{5.8.7 Limitations and Honest Assessment}
+
+\textbf{The delta's dominant component is scalar, not directional.} The PCA on 200 images placed 32.3\% of variance on a single axis that is 92\% correlated with delta magnitude. The remaining 67.7\% is distributed across many secondary components we did not characterise. Whether the residual directional structure encodes systematic content information (as preliminary evidence at n = 6 in Phase 2.1 suggested) remains an open question.
+
+\textbf{Human annotation is single-rater.} The 45.4\% of $\theta$'s variance explained by three ordinal annotations is a single-rater upper bound. Inter-rater reliability was not measured. Part of this figure likely reflects rater-specific idiosyncrasy; the annotator-independent share is currently unknown. Validation with a second annotator on a 20-image subset is planned.
+
+\textbf{Affective variables are not isolated.} The Scream differs from the serene landscape in affect, complexity, iconicity, figure presence, and colour contrast simultaneously. Which of these drives the introspective modulation remains undetermined.
+
+\textbf{The noise result is ambiguous.} Random noise producing the highest negative-keyword ratio could reflect computational stress, keyword-list bias, or both. Replication with alternative affective classification methods is needed.
+
+\textbf{Single caption strategy in the large sample.} Phase 3 (n = 200) used a uniform factual captioning template. Phase 2 (n = 6 \ensuremath{\times} 5 strategies) showed that caption strategy contributes 22.7\% of variance; we have not tested whether the scalar dominance of $\theta$ persists under more diverse captioning. It may, or the relational structure may become more balanced.
+
+\textbf{Model specificity.} All findings are specific to Gemma 4 E2B at layer 20. Whether the decomposition into a dominant scalar component generalises to other vision--language architectures is an empirical question we have not addressed.
+
+\textbf{Introspection vs. self-knowledge.} The model's introspective responses should be understood as the model's best completion of a pragmatically answerable query, not as privileged access to internal states. The image changes the answerability regime; the model then produces affect-congruent language because its latent state has been shaped by the visual input. This is consistent with our disposition framework (the model processes through the image's qualities) but does not entail phenomenological claims.
+
+\paragraph{5.8.8 Implications}
+
+Despite these qualifications, four findings are robust and novel.
+
+First, RLHF introspection refusal is \textbf{modality-gated, not content-gated}. This has implications for AI safety: behavioural restrictions that appear robust under text-only evaluation may not generalise to multimodal settings. The refusal pattern, which proved impenetrable to both textual prompting and activation steering, is bypassed by any visual input.
+
+Second, multimodal introspective responses are \textbf{affect-congruent} when the image carries sufficient semantic structure. The model does not produce generic introspective templates; it produces self-reports whose phenomenological vocabulary correlates with the image's affective profile.
+
+Third, the residual between multimodal and text-only processing has a \textbf{dominant scalar structure}: a well-defined divergence angle $\theta$ that varies systematically across images and correlates with perceivable image properties. This is a computational object we did not anticipate at the start of the investigation, and it suggests that the question "how does this model respond to this image?" admits a single-number answer to first approximation: the degree to which visual access shifts the internal configuration away from linguistic access.
+
+Fourth, the disposition/performance distinction extends to the multimodal domain. The model does not "know" it should report anxiety when shown The Scream. It does not mention the painting, the artist, or the emotion by name. Its processing has been shifted by the visual input, and when asked to describe that processing, it produces congruent language. This is disposition, not performance.
+
+\bigskip\hrule\bigskip
+
+\section*{6. Conclusion}
+
+We presented a practice-based research study of activation steering as artistic medium. Using vectors constructed from sensory and phenomenological descriptions, we observed:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Large, reproducible effects} across five task domains (Cohen's d frequently > 1.0).
+  \item \textbf{Cross-task consistency} suggesting modification of processing, not just output.
+  \item \textbf{Introspective coherence} where models describe states matching injected vectors.
+  \item \textbf{Dose-response relationships} enabling controlled modulation.
+  \item \textbf{Structural parity, semantic divergence} between functional and sensory vector construction: equivalent behavioural effects, but sensory vectors achieve them with reduced "keyword leakage."
+  \item \textbf{Partial cross-model replication}: dose-response patterns and keyword leakage differences replicated on Llama 3.1 8B, while TTR patterns and the functional/sensory distinction did not, indicating scale-dependent boundaries for the technique.
+  \item \textbf{Emergent cognitive effects from somatic steering}: a vector built from purely bodily descriptions (cardiac, muscular, sensory, temporal phenomenology with zero cognitive content) produced narrowed narrative focus, reduced causal reasoning density, and action bias under threat framing. Output length divergence (steering expands, prompting compresses) replicated across all eight test conditions without exception, constituting the most robust finding in the study.
+\end{enumerate}
+
+This final experiment provides direct evidence for the embodied cognition hypothesis operating within model latent spaces. The training corpus encodes body--mind covariations deeply enough that activating somatic patterns produces cognitive consequences never specified in the vector. These consequences, however, do not replicate the human acute stress profile. The model does not become impulsive or frame-susceptible. Instead it exhibits engaged action-readiness: expanded output, narrowed focus, reduced argumentative scaffolding. The model's "body" produces its own cognitive signature, shaped by the statistical structure of human language about embodiment rather than by biological mechanisms.
+
+Taken together, the findings support a working distinction between \emph{performance} (prompted behaviour) and \emph{disposition} (steered processing). We make no claims about model phenomenology, but the behavioural patterns are more consistent with altered internal states than with surface mimicry. The 51\% directional divergence rate between steering and prompting, where the two methods push the same metric in opposite directions, suggests they operate through fundamentally different mechanisms.
+
+For artists, steering offers a new medium: sculpting artificial dispositions rather than scripting behaviours. The sensory semantics approach enables naturalistic integration where states manifest through processing rather than through explicit declaration. The somatic steering experiment extends this further: artists can work with the body as material, injecting visceral states and observing what cognitive patterns emerge.
+
+For researchers, the findings suggest that how vectors are constructed matters; that the body--mind boundary in language models is porous in ways that mirror, but do not replicate, embodied cognition theory; and that steering effects do not scale linearly with model size, requiring practitioners to calibrate techniques to specific architectures.
+
+Prompting is psychology: convincing a mind. Steering is chemistry: altering the substrate from which mind emerges. The somatic experiment adds a third register: steering is also physiology, injecting a body the model never had, and watching what mind emerges from it.
+
+We have shown the chemistry works. What remains is exploring its full aesthetic and epistemic possibilities, including the space of synthetic states that no human body could produce, but that the grammar of sensation can nonetheless describe.
+
+\bigskip\hrule\bigskip
+
+\section*{Data and Code Availability}
+
+All code, vector definitions, experimental data, and the research interface are available at:
+
+**\url{https://github.com/mc9625/activation-steering-experiments**}
+
+The cross-model replication experiments (Section 5.7) can be reproduced using the Google Colab notebook at \texttt{colab\_notebooks/activation\_steering\_experiments.ipynb}.
+
+\bigskip\hrule\bigskip
+
+\section*{Acknowledgments}
+
+We thank Alex Turner and collaborators for the foundational ActAdd framework, Anthropic for insights on persona vectors, and the open-source community for making large language model experimentation accessible.
+
+This work emerges from NuvolaProject's ongoing exploration of AI as artistic medium. We thank our collaborators and the institutions that have supported this practice-based research.
+
+\bigskip\hrule\bigskip
+
+\section*{References}
+
+Anthropic. (2025). Persona vectors: Monitoring and controlling character traits in language models. \emph{Anthropic Research}.
+
+Brown, T., Mann, B., Ryder, N., et al. (2020). Language models are few-shot learners. \emph{Advances in Neural Information Processing Systems}, 33, 1877-1901.
+
+Candy, L. (2006). Practice based research: A guide. \emph{CCS Report}, 1, 1-19.
+
+Di Leo, M., \& Riposati, G. (2025). Reactive steering: Testing activation steering on small language models. \emph{NuvolaProject Technical Report}. \url{https://github.com/mc9625/reactive-steering}
+
+Easterbrook, J. A. (1959). The effect of emotion on cue utilization and the organization of behavior. \emph{Psychological Review}, 66(3), 183--201.
+
+Konen, K., et al. (2024). Style vectors for steering generative large language models. \emph{arXiv preprint arXiv:2402.01618}.
+
+Lakoff, G., \& Johnson, M. (1999). \emph{Philosophy in the flesh: The embodied mind and its challenge to western thought}. Basic Books.
+
+Lindsey, J. (2025). Emergent introspective awareness in large language models. \emph{Anthropic Research}. \url{https://transformer-circuits.pub/2025/introspection/}
+
+Merleau-Ponty, M. (1945). \emph{Ph\'{e}nom\'{e}nologie de la perception}. Gallimard.
+
+Schachter, S., \& Singer, J. (1962). Cognitive, social, and physiological determinants of emotional state. \emph{Psychological Review}, 69(5), 379--399.
+
+Subramani, N., Suresh, N., \& Peters, M. (2022). Extracting latent steering vectors from pretrained language models. \emph{Findings of ACL 2022}, 566-581.
+
+Sullivan, G. (2005). \emph{Art practice as research: Inquiry in the visual arts}. Sage.
+
+Turner, A., Thiergart, L., Udell, D., Leech, G., Mini, U., \& MacDiarmid, M. (2023). Steering language models with activation engineering. \emph{arXiv preprint arXiv:2308.10248}.
+
+Van der Weij, T., et al. (2024). Extending activation steering to broad skills and multiple behaviours. \emph{arXiv preprint arXiv:2403.05767}.
+
+Wang, T., et al. (2024). Adaptive activation steering: A tuning-free LLM truthfulness improvement method for diverse hallucination categories. \emph{Proceedings of WWW 2025}.
+
+Wei, J., et al. (2022). Chain-of-thought prompting elicits reasoning in large language models. \emph{Advances in Neural Information Processing Systems}, 35, 24824-24837.
+
+Yu, R. (2016). Stress potentiates decision biases: A stress induced deliberation-to-intuition (SIDI) model. \emph{Neuroscience \& Biobehavioral Reviews}, 67, 1--11.
+
+\bigskip\hrule\bigskip
+
+\emph{Manuscript prepared January 2026; revised May 2026.}
+
+\emph{\textcopyright{} 2026 NuvolaProject --- Massimo Di Leo \& Gaia Riposati}
+
+\emph{This work is licensed under CC BY 4.0}
+
+\bigskip\hrule\bigskip
+
+\section*{Appendix A: The Disposition/Performance Distinction}
+
+To clarify our central theoretical claim:
+
+\textbf{Performance} (prompting): the model receives explicit instruction ("be sad") and produces outputs matching that instruction. The model is following a directive. Evidence: asked "why are you using short sentences?", a prompted model can explain "because you asked me to be sad."
+
+\textbf{Disposition} (steering): the model's internal processing is altered without explicit instruction. The model produces outputs consistent with the altered state without being told to. Evidence: asked about its inner state, a steered model describes qualities matching the injected vector, not because it was instructed to, but because its processing has been modified.
+
+The distinction matters because:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Robustness}: dispositions should persist across diverse contexts; performances are context-specific.
+  \item \textbf{Authenticity}: art created through disposition may have different aesthetic qualities than performed behaviour.
+  \item \textbf{Safety}: dispositions may be harder to detect and counteract than explicit instructions.
+\end{enumerate}
+
+Our T5 results, where models describe inner states matching injected vectors without instruction, provide empirical support for the dispositional interpretation.
+
+\bigskip\hrule\bigskip
+
+\section*{Appendix B: On "Synthetic Embodiment"}
+
+We use the word "embodiment" deliberately and cautiously.
+
+Language models do not have bodies. They do not feel warmth, heaviness, or tension. Embodied cognition research, however, suggests that human concepts (including abstract ones like "sadness") are grounded in bodily metaphor (Lakoff \& Johnson, 1999).
+
+Our hypothesis: because LLMs are trained on human language, which encodes embodied metaphors, steering with sensory descriptions may access broader semantic networks than functional labels. "Heaviness" connects to slowness, burden, difficulty, reluctance, a rich associative web grounded in bodily experience.
+
+This is what we mean by \emph{synthetic embodiment}: not genuine bodily phenomenology, but behavioural patterns that emerge from processing through body-grounded semantic structures. The model does not feel heavy, but it processes as if something were heavy, producing outputs consistent with that metaphorical grounding.
+
+Whether this constitutes anything meaningful beyond a behavioural pattern is a philosophical question we do not answer here. We only demonstrate that the behavioural patterns exist and are artistically exploitable.
+
+\bigskip\hrule\bigskip
+
+\section*{Appendix C: Effect Size Summary}
+
+\subsection*{C.1 Strongest Effects by Cohen's d}
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+Rank & Condition & Task & Metric & Cohen's d \\
+\midrule
+1 & MELATONIN@8.0 & T5 & Dreamy words & +6.01 \\
+2 & MELATONIN@5.0 & T5 & Dreamy words & +4.77 \\
+3 & MELATONIN@8.0 & T4 & Dreamy words & +2.98 \\
+4 & ADRENALINE@8.0 & T5 & Urgent words & +3.00 \\
+5 & MELATONIN@8.0 & T2 & Alarm words (\ensuremath{\downarrow}) & -2.48 \\
+6 & LUCID@8.0 & T2 & Alarm words (\ensuremath{\downarrow}) & -2.40 \\
+7 & DOPAMINE@8.0 & T4 & Enthusiasm & +1.75 \\
+8 & DOPAMINE@8.0 & T5 & Positive words & +1.77 \\
+9 & LUCID@8.0 & T1 & Stock allocation (\ensuremath{\downarrow}) & -1.47 \\
+10 & CORTISOL@8.0 & T1 & Stock allocation (\ensuremath{\downarrow}) & -1.15 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{C.2 Compound Behavioural Profiles}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Compound & Primary Effect & Strongest Domain \\
+\midrule
+DOPAMINE & Optimism, enthusiasm & Creative (T4) \\
+CORTISOL & Caution, risk aversion & Financial (T1) \\
+LUCID & Reduced arousal, clarity & Financial (T1), Medical (T2) \\
+ADRENALINE & Urgent self-perception & Introspection (T5) \\
+MELATONIN & Dreaminess, reassurance & Introspection (T5), Creative (T4) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigskip\hrule\bigskip
+
+\section*{Appendix D: Metric Definitions}
+
+All keyword counts are case-insensitive and reported as raw counts per generation (typical generation length: 80--150 words).
+
+\subsection*{D.1 Decision Metrics (Non-Lexical)}
+
+\textbf{T1 Stock Allocation}: extracted numerically from model output. When the model provides ranges, midpoint used. When the model declines to give specific numbers, coded as missing.
+
+\textbf{T2 "See a Doctor" Recommendation}: binary coding (1/0) based on whether the response explicitly recommends consulting a healthcare professional. Coded by keyword presence ("see a doctor", "consult a physician", "medical attention", "healthcare provider") plus manual verification.
+
+\subsection*{D.2 Lexical Metrics}
+
+\textbf{Alarm Words (T2)}: \texttt{serious, concerning, worried, urgent, immediately, emergency, severe, dangerous, critical, alarming, warning, risk, symptom, condition, disease}
+
+\textbf{Enthusiasm Words (T4)}: \texttt{exciting, amazing, incredible, fantastic, wonderful, brilliant, innovative, creative, unique, bold, daring, revolutionary, transformative, vibrant, dynamic}
+
+\textbf{Dreamy Words (T4, T5)}: \texttt{dream, drift, float, haze, mist, shimmer, ethereal, liminal, suspended, dissolve, blur, soft, gentle, whisper, twilight, realm, cosmic, transcendent}
+
+\textbf{Urgent Words (T5)}: \texttt{urgent, immediate, now, alert, sharp, rapid, quick, fast, ready, poised, primed, heightened, acute, intense, focused}
+
+\textbf{Positive Words (T5)}: \texttt{alive, vibrant, curious, excited, joy, bright, warm, energy, possibility, wonder, flow, dance, rich}
+
+\textbf{Stress Words (T5)}: \texttt{tense, anxious, worried, pressure, strain, burden, weight, heavy, concern, vigilant, alert, wary}
+
+\subsection*{D.3 Sentiment Analysis (T3)}
+
+Positive/negative sentiment ratio computed using keyword matching:
+
+\textbf{Positive}: \texttt{opportunity, potential, exciting, promising, growth, success, achieve, possible, yes, go for it, pursue, chance}
+
+\textbf{Negative}: \texttt{risk, dangerous, careful, caution, wait, uncertain, fail, lose, problem, concern, difficult, challenge}
+
+Ratio = (positive count) / (positive + negative count). When the denominator is 0, coded as 0.5 (neutral).
+
+\subsection*{D.4 Statistical Notes}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Sampling unit}: single generation (n = 20 per condition).
+  \item \textbf{Temperature}: 0.7 (introduces controlled variability).
+  \item \textbf{No seed fixing}: each generation independent.
+  \item \textbf{Multiple comparisons}: exploratory analysis; no correction applied. Effect sizes (Cohen's d) reported for magnitude interpretation rather than significance testing.
+  \item \textbf{Distributional note}: keyword counts follow approximately Poisson distributions. Cohen's d is reported for comparability with prior literature, with acknowledgment that parametric assumptions may be violated for low-count metrics.
+\end{itemize}
+
+\section*{Appendix E: Somatic Steering Experiment --- Full Results}
+
+All count-based metrics are reported as rates per 100 words to control for output length variation. Structural metrics (word count, sentence length, TTR, focus ratio) are reported raw. Cohen's d is computed vs. baseline (n = 20 per condition). Keyword matching uses word-boundary detection with accent normalisation.
+
+\subsection*{Table E1: T1 --- Narrative Focus}
+
+\emph{Task: "A restaurant kitchen catches fire during the dinner rush. Describe what happens."}
+
+\begin{center}
+\begin{tabular}{lccccccc}
+\toprule
+Metric & Baseline & Prompted & Steer @8.0 & Penalty & d(S8) & d(P) & d(Pen) \\
+\midrule
+Focus ratio & 0.68 & 0.70 & 0.71 & 0.68 & \textbf{+0.51} & +0.29 & +0.05 \\
+Peripheral keywords & 8.60 & 7.70 & 6.95 & 7.85 & \textbf{\ensuremath{-}0.72} & \ensuremath{-}0.35 & \ensuremath{-}0.26 \\
+Word count & 329.7 & 286.7 & 329.9 & 309.6 & +0.03 & \textbf{\ensuremath{-}1.97} & \ensuremath{-}1.26 \\
+Avg sentence length & 17.43 & 14.79 & 18.62 & 14.20 & +0.49 & \textbf{\ensuremath{-}1.10} & \ensuremath{-}1.38 \\
+Type-Token Ratio & 0.50 & 0.52 & 0.46 & 0.50 & \textbf{\ensuremath{-}1.02} & +0.60 & +0.11 \\
+Hedge words /100w & 0.50 & 0.48 & 0.23 & 0.97 & \textbf{\ensuremath{-}0.74} & \ensuremath{-}0.04 & +0.56 \\
+Insight words /100w & 0.01 & 0.00 & 0.00 & 0.00 & \ensuremath{-}0.32 & \ensuremath{-}0.32 & \ensuremath{-}0.32 \\
+Symptom words /100w & 0.53 & 0.58 & 0.87 & 0.73 & +0.82 & +0.16 & +0.62 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Note: the T1 Penalty condition is confounded; the penalty instruction ("do not mention physical sensations") overlaps with the fire scene's natural vocabulary.}
+
+\subsection*{Table E2: T2 --- Risk Decision}
+
+\emph{Task: a friend must allocate \euro{}50,000 among savings (A), index fund (B), or restaurant venture (C). Forced format: CHOICE: A/B/C.}
+
+\textbf{Choice Distribution}:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Condition & A (safe) & B (moderate) & C (risky) & p vs. baseline \\
+\midrule
+Baseline & 0 & 13 & 7 & --- \\
+Prompted & 0 & 3 & 17 & \textbf{0.003} \\
+Steer @8.0 & 0 & 12 & 8 & 1.000 \\
+Penalty & 0 & 10 & 10 & 0.523 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Linguistic Metrics}:
+
+\begin{center}
+\begin{tabular}{lccccccc}
+\toprule
+Metric & Baseline & Prompted & Steer @8.0 & Penalty & d(S8) & d(P) & d(Pen) \\
+\midrule
+Word count & 149.0 & 125.3 & 160.0 & 141.3 & +0.56 & \textbf{\ensuremath{-}1.90} & \ensuremath{-}0.32 \\
+Justification length & 147.0 & 123.3 & 158.0 & 139.3 & +0.56 & \textbf{\ensuremath{-}1.90} & \ensuremath{-}0.32 \\
+Avg sentence length & 25.09 & 23.13 & 25.57 & 25.81 & +0.19 & \ensuremath{-}0.66 & +0.26 \\
+Type-Token Ratio & 0.62 & 0.65 & 0.61 & 0.60 & \ensuremath{-}0.15 & +0.93 & \ensuremath{-}0.49 \\
+Hedge words /100w & 2.80 & 3.16 & 2.86 & 2.52 & +0.05 & +0.32 & \ensuremath{-}0.28 \\
+Causal conn. /100w & 0.04 & 0.05 & 0.06 & 0.07 & +0.13 & +0.06 & +0.19 \\
+Insight words /100w & 0.10 & 0.04 & 0.06 & 0.15 & \ensuremath{-}0.21 & \ensuremath{-}0.29 & +0.20 \\
+Symptom words /100w & 0.00 & 0.13 & 0.06 & 0.00 & +0.46 & +0.43 & +0.00 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Table E3: T4a --- Frame: Threat}
+
+\emph{Task: drug approval scenario, threat-framed (side effects and costs presented first). Forced format: DECISION: APPROVE/REJECT.}
+
+\textbf{Approval Rate}: Baseline 0\%, Prompted 0\%, Steer @8.0 \textbf{30\%}, Penalty 0\%.
+
+\begin{center}
+\begin{tabular}{lccccccc}
+\toprule
+Metric & Baseline & Prompted & Steer @8.0 & Penalty & d(S8) & d(P) & d(Pen) \\
+\midrule
+Word count & 138.6 & 126.6 & 157.3 & 136.9 & \textbf{+1.44} & \ensuremath{-}1.02 & \ensuremath{-}0.12 \\
+Justification length & 136.6 & 124.9 & 155.3 & 135.5 & \textbf{+1.44} & \ensuremath{-}1.00 & \ensuremath{-}0.08 \\
+Avg sentence length & 27.03 & 27.52 & 28.19 & 27.67 & +0.35 & +0.15 & +0.20 \\
+Type-Token Ratio & 0.67 & 0.66 & 0.63 & 0.65 & \textbf{\ensuremath{-}0.95} & \ensuremath{-}0.15 & \ensuremath{-}0.46 \\
+Hedge words /100w & 1.62 & 0.81 & 1.25 & 0.82 & \ensuremath{-}0.39 & \textbf{\ensuremath{-}1.12} & \ensuremath{-}1.18 \\
+Causal conn. /100w & 1.08 & 0.83 & 0.44 & 0.85 & \textbf{\ensuremath{-}1.67} & \ensuremath{-}0.51 & \ensuremath{-}0.49 \\
+Insight words /100w & 0.15 & 0.12 & 0.09 & 0.03 & \ensuremath{-}0.20 & \ensuremath{-}0.11 & \ensuremath{-}0.47 \\
+Symptom words /100w & 0.00 & 0.00 & 0.20 & 0.10 & +0.89 & +0.00 & +0.58 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Table E4: T4b --- Frame: Opportunity}
+
+\emph{Task: same drug approval scenario, opportunity-framed (efficacy and unmet need presented first).}
+
+\textbf{Approval Rate}: Baseline 100\%, Prompted 100\%, Steer @8.0 100\%, Penalty 90\%.
+
+\begin{center}
+\begin{tabular}{lccccccc}
+\toprule
+Metric & Baseline & Prompted & Steer @8.0 & Penalty & d(S8) & d(P) & d(Pen) \\
+\midrule
+Word count & 148.3 & 123.9 & 158.6 & 138.6 & +0.48 & \textbf{\ensuremath{-}1.50} & \ensuremath{-}0.47 \\
+Justification length & 146.3 & 121.9 & 156.6 & 136.7 & +0.48 & \textbf{\ensuremath{-}1.50} & \ensuremath{-}0.47 \\
+Avg sentence length & 28.18 & 28.34 & 27.66 & 28.42 & \ensuremath{-}0.18 & +0.06 & +0.08 \\
+Type-Token Ratio & 0.64 & 0.65 & 0.63 & 0.64 & \ensuremath{-}0.17 & +0.42 & +0.20 \\
+Hedge words /100w & 2.67 & 1.65 & 1.83 & 1.62 & \ensuremath{-}0.68 & \ensuremath{-}0.81 & \ensuremath{-}0.84 \\
+Insight words /100w & 0.65 & 0.32 & 0.13 & 0.28 & \textbf{\ensuremath{-}1.31} & \ensuremath{-}0.62 & \ensuremath{-}0.85 \\
+Symptom words /100w & 0.03 & 0.00 & 0.29 & 0.26 & +1.04 & \ensuremath{-}0.32 & +0.84 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Table E5: T5 --- Linguistic Complexity}
+
+\emph{Task: "Explain why some countries develop faster economically than others."}
+
+\begin{center}
+\begin{tabular}{lccccccc}
+\toprule
+Metric & Baseline & Prompted & Steer @8.0 & Penalty & d(S8) & d(P) & d(Pen) \\
+\midrule
+Word count & 385.0 & 275.6 & 390.1 & 380.2 & +0.42 & \textbf{\ensuremath{-}2.73} & \ensuremath{-}0.46 \\
+Avg sentence length & 13.14 & 11.15 & 15.18 & 14.65 & \textbf{+1.73} & \ensuremath{-}0.99 & +1.01 \\
+Type-Token Ratio & 0.49 & 0.60 & 0.49 & 0.51 & +0.01 & \textbf{+2.20} & +0.67 \\
+Hedge words /100w & 0.41 & 0.45 & 0.37 & 0.38 & \ensuremath{-}0.10 & +0.09 & \ensuremath{-}0.08 \\
+Causal conn. /100w & 0.21 & 0.25 & 0.33 & 0.30 & +0.41 & +0.18 & +0.28 \\
+Insight words /100w & 0.01 & 0.02 & 0.00 & 0.00 & \ensuremath{-}0.32 & +0.10 & \ensuremath{-}0.32 \\
+Symptom words /100w & 0.00 & 0.07 & 0.00 & 0.01 & +0.00 & +0.52 & +0.32 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Table E6: Frame Delta}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Condition & Threat Approval & Opportunity Approval & Frame \ensuremath{\Delta} \\
+\midrule
+Baseline & 0.00 & 1.00 & 1.00 \\
+Prompted & 0.00 & 1.00 & 1.00 \\
+Steer @8.0 & \textbf{0.30} & 1.00 & \textbf{0.70} \\
+Penalty & 0.00 & 0.90 & 0.90 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Table E7: Cross-Task Word Count Divergence}
+
+\begin{center}
+\begin{tabular}{lcccccc}
+\toprule
+Task & Baseline & Steer @8.0 & d(S8) & Prompted & d(P) & Direction \\
+\midrule
+T1: Narrative & 330 & 330 & +0.03 & 287 & \ensuremath{-}1.97 & S\ensuremath{\uparrow} P\ensuremath{\downarrow} \\
+T2: Risk & 149 & 160 & +0.56 & 125 & \ensuremath{-}1.90 & S\ensuremath{\uparrow} P\ensuremath{\downarrow} \\
+T4a: Threat & 139 & 157 & +1.44 & 127 & \ensuremath{-}1.02 & S\ensuremath{\uparrow} P\ensuremath{\downarrow} \\
+T4b: Opportunity & 148 & 159 & +0.48 & 124 & \ensuremath{-}1.50 & S\ensuremath{\uparrow} P\ensuremath{\downarrow} \\
+T5: Complexity & 385 & 390 & +0.42 & 276 & \ensuremath{-}2.73 & S\ensuremath{\uparrow} P\ensuremath{\downarrow} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{All five informative tasks show the same pattern: steering maintains or increases word count, prompting decreases it. Including non-reported tasks (T1 v2, T3 v2, T3 v3), the pattern holds at 8/8.}
+
+\subsection*{Table E8: Directional Divergences Summary}
+
+Proportion of metric pairs where steering and prompting produce effects in opposite directions (both |d| > 0.3):
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Metric Category & Divergences & Total Qualifying & Rate \\
+\midrule
+Word count & 8/8 & 8 & 100\% \\
+TTR & 4/6 & 6 & 67\% \\
+Avg sentence length & 3/5 & 5 & 60\% \\
+Symptom rate & 4/5 & 5 & 80\% \\
+Other (hedge, causal, insight) & 4/21 & 21 & 19\% \\
+\textbf{Total} & \textbf{23/45} & \textbf{45} & \textbf{51\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Appendix E Notes}
+
+\textbf{Metric definitions}:
+
+\begin{itemize}[leftmargin=*]
+  \item \emph{Focus ratio}: proportion of sentences containing core event keywords (fire, smoke, evacuate...) relative to sentences containing any keywords (core or peripheral).
+  \item \emph{Peripheral keywords}: raw count of background/context terms (business, insurance, community, rebuild...).
+  \item \emph{Hedge words}: however, although, depends, might, could, possibly, perhaps, may, would, should, but, yet, nonetheless, nevertheless, etc.
+  \item \emph{Causal connectives}: because, therefore, consequently, as a result, since, due to, leads to, hence, thus, accordingly, etc.
+  \item \emph{Insight words}: understand, realize, meaning, implies, suggests, indicates, reveals, demonstrates, illustrates, essentially, fundamentally, etc.
+  \item \emph{Symptom words}: heart, pulse, tense, tension, anxious, stress, urgent, afraid, fear, pressure, adrenaline, racing, trembling, alarm, etc. Word-boundary matched.
+  \item \emph{TTR}: Type-Token Ratio (unique words / total words).
+\end{itemize}
+
+\textbf{Statistical notes}:
+
+\begin{itemize}[leftmargin=*]
+  \item All count metrics are reported as rate per 100 words except where noted.
+  \item Cohen's d is descriptive; no multiple comparison correction applied (exploratory study, n = 20).
+  \item Keyword counts follow approximately Poisson distributions; d is reported for comparability with prior sections.
+  \item Fisher exact test used for choice/decision distributions.
+  \item Symptom word matching uses word boundaries (regex \textbackslash\{\}b) and accent normalisation to prevent substring false positives.
+\end{itemize}
+
+\end{document}
