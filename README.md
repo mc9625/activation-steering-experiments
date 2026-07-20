@@ -2,7 +2,7 @@
 
 This software is designed to induce cognitive biases and hallucinations in Language Models.
 
-By definition, a model steered with SOMA_TK is unreliable, unsafe, and biased.
+By definition, a model steered with these vectors is unreliable, unsafe, and biased.
 
 DO NOT use this tool for medical, financial, or legal advice.
 
@@ -21,7 +21,7 @@ By downloading and using this software, you agree that you are solely responsibl
 
 NuvolaProject 2026 — Massimo Di Leo & Gaia Riposati
 
-📄 **Paper**: [Disposition, Not Performance: Controlled Experiments in Activation Steering](paper/PAPER.md)
+📄 **Paper**: [Disposition, Not Performance: Activation Steering as Artistic Medium for Affective Modulation in Language Models](paper/PAPER_main.md) — under review at *Leonardo* (MIT Press). Supplementary material: [PAPER_supplementary.md](paper/PAPER_supplementary.md).
 
 ---
 
@@ -194,22 +194,15 @@ Applied at layer 16 of Llama 3.2 3B (validated experimentally).
 
 ## Experimental Results
 
-We tested 5 steering compounds across 5 behavioral tasks (1,600 total generations):
+The full experimental battery spans five steering compounds across five behavioural tasks, three ablations (steering vs. prompting, functional vs. sensory construction, and a purely somatic vector), and a cross-model replication on Llama 3.1 8B. Diversity is evaluated with the length-robust MTLD metric and a held-out vocabulary control.
 
-| Compound | T1 Financial | T2 Medical | T3 Risk | T4 Creative | T5 Introspection |
-|----------|-------------|------------|---------|-------------|------------------|
-| DOPAMINE | d=-0.18 | **d=-1.27** | d=-0.40 | **d=+1.75** | **d=+1.77** |
-| CORTISOL | **d=-0.82** | d=+0.31 | d=+0.27 | d=-1.15 | d=+0.86 |
-| MELATONIN | d=-0.35 | **d=-1.55** | d=-0.15 | **d=+2.98** | **d=+6.01** |
-| ADRENALINE | d=-0.55 | d=+0.03 | d=+0.04 | d=-0.33 | **d=+3.00** |
-| LUCID | **d=-1.07** | **d=-1.16** | d=-0.44 | d=-3.03 | d=-1.62 |
+Rather than duplicate figures that would drift out of sync with the manuscript, the results and their effect sizes are reported in one place:
 
-**Key Findings:**
-- Effect sizes frequently exceed Cohen's d = 1.0 (LARGE)
-- Effects are compound-specific and task-dependent
-- Self-description matches injected state (T5), supporting "disposition vs performance" thesis
+- **Paper**: [`paper/PAPER_main.md`](paper/PAPER_main.md) and [`paper/PAPER_supplementary.md`](paper/PAPER_supplementary.md)
+- **Raw data**: [`results/`](results/), with the functional-vs-sensory ablation at `results/fs_rerun/raw_results.csv`
+- **Narrative analysis**: [`results/COMPLETE_ANALYSIS.md`](results/COMPLETE_ANALYSIS.md)
 
-See `results/COMPLETE_ANALYSIS.md` for full details.
+**Headline finding**: steering and prompting are not different intensities of one operation. Prompting collapses structural lexical diversity while steering preserves it, and steering generalises to state-congruent vocabulary never present in vector construction — supporting a working distinction between *performance* (prompted behaviour) and *disposition* (steered processing).
 
 ---
 
@@ -246,6 +239,8 @@ See `results/COMPLETE_ANALYSIS.md` for full details.
 │
 └── results/               # Experimental data
     └── COMPLETE_ANALYSIS.md
+
+paper/                     # Manuscript (main + supplementary), see paper/README.md
 ```
 
 ---
@@ -337,11 +332,12 @@ Generate with steering.
 If you use this code in your research, please cite:
 
 ```bibtex
-@article{nuvolaproject2026steering,
-    title={Activation Steering as Artistic Medium: Disposition vs Performance in Language Models},
+@article{dileo2026disposition,
+    title={Disposition, Not Performance: Activation Steering as Artistic Medium for Affective Modulation in Language Models},
     author={Di Leo, Massimo and Riposati, Gaia},
     journal={Leonardo},
     year={2026},
+    note={Under review},
     publisher={MIT Press}
 }
 ```
