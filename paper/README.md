@@ -1,8 +1,10 @@
 # Paper: Disposition, Not Performance
 
-**Controlled Experiments in Activation Steering for Affective Modulation of Language Models**
+**Activation Steering as Artistic Medium for Affective Modulation in Language Models**
 
-Massimo Di Leo & Gaia Riposati — NuvolaProject, January 2026
+Massimo Di Leo & Gaia Riposati — NuvolaProject, Rome
+
+Under review at *Leonardo* (MIT Press).
 
 ---
 
@@ -10,56 +12,58 @@ Massimo Di Leo & Gaia Riposati — NuvolaProject, January 2026
 
 | File | Description |
 |------|-------------|
-| `PAPER.md` | Full paper in Markdown format |
-| `paper.tex` | LaTeX source for journal submission |
+| `PAPER_main.md` | Main manuscript (Markdown) |
+| `PAPER_main.tex` / `PAPER_main.pdf` | Main manuscript (LaTeX source and compiled PDF) |
+| `PAPER_supplementary.md` | Supplementary material (Markdown) |
+| `PAPER_supplementary.tex` / `PAPER_supplementary.pdf` | Supplementary material (LaTeX source and compiled PDF) |
+
+The manuscript was split into main and supplementary parts to meet the journal's length limit. The `.tex` and `.pdf` files are regenerated from the Markdown; the Markdown is the source of record.
 
 ## Abstract
 
-We present a controlled experimental study of activation steering across five task domains (financial, medical, risk, creative, introspective) using five semantically-grounded steering vectors. Results demonstrate large effects (Cohen's d > 1.0), compound-specific profiles, introspective coherence, and dose-response relationships—supporting the distinction between behavioral *performance* and *dispositional* change.
+A practice-based research study of activation steering as an artistic medium for inducing simulated affective states in language models. The methodological contribution is that steering vectors are built from sensory and phenomenological descriptions rather than functional labels: imagery of "heaviness, rain, silence, cold" in place of an instruction like "be melancholic." Across five task domains on Llama 3.2 3B the work reports large effects, cross-task consistency, and introspective coherence, and develops a working distinction between *performance* (prompted behaviour) and *disposition* (steered processing). A somatic steering experiment provides evidence that the model's latent space encodes body–mind covariations learnable from text alone. Supplementary material extends the work to a multimodal investigation on Gemma 4 E2B.
 
-## Key Results
+## Method summary
 
-| Finding | Evidence |
-|---------|----------|
-| Large effects | 37% of conditions show d > 0.8 |
-| Cross-task consistency | Same compound → coherent effects across domains |
-| Introspective coherence | Steered models describe matching inner states |
-| Dose-response | Monotonic intensity scaling observed |
+Steering vectors are extracted by contrastive activation addition (CAA) and injected into the residual stream at layer 16 of Llama 3.2 3B. Three ablations are reported: steering versus prompting (evaluated with the length-robust MTLD diversity metric and a held-out vocabulary control), functional versus sensory vector construction, and a purely somatic vector with zero cognitive content. Cross-model replication on Llama 3.1 8B is included in the supplementary.
 
-## Strongest Effects
+## Data
 
-| Compound | Task | Cohen's d |
-|----------|------|-----------|
-| MELATONIN | T5 Introspection (dreamy) | **+6.01** |
-| ADRENALINE | T5 Introspection (urgent) | **+3.00** |
-| MELATONIN | T4 Creativity (dreamy) | **+2.98** |
-| MELATONIN | T2 Medical (alarm ↓) | **-2.48** |
-| DOPAMINE | T4 Creativity (enthusiasm) | **+1.75** |
+Raw generations backing the tables are in `../results/`. The functional-versus-sensory ablation data used for Table 5 is at `../results/fs_rerun/raw_results.csv`.
 
-## Compiling LaTeX
+## Compiling
 
 ```bash
-pdflatex paper.tex
-# or
-latexmk -pdf paper.tex
+pdflatex PAPER_main.tex && pdflatex PAPER_main.tex
+pdflatex PAPER_supplementary.tex && pdflatex PAPER_supplementary.tex
 ```
+
+Run twice so cross-references resolve.
 
 ## Citation
 
 ```bibtex
 @article{dileo2026disposition,
-  title={Disposition, Not Performance: Controlled Experiments in Activation Steering for Affective Modulation of Language Models},
-  author={Di Leo, Massimo and Riposati, Gaia},
-  journal={arXiv preprint},
-  year={2026}
+  title   = {Disposition, Not Performance: Activation Steering as Artistic
+             Medium for Affective Modulation in Language Models},
+  author  = {Di Leo, Massimo and Riposati, Gaia},
+  journal = {Leonardo},
+  year    = {2026},
+  note    = {Under review},
+  publisher = {MIT Press}
 }
 ```
 
-## Related Resources
+## Contact
 
-- **Code & Data**: See parent directory `../` for full implementation
-- **Previous work**: [Reactive Steering](https://github.com/mc9625/reactive-steering)
+Massimo Di Leo — massimo@nuvolaproject.cloud
+Gaia Riposati — gaiariposati@nuvolaproject.cloud
+
+## Related resources
+
+- Code and data: parent directory `../`
+- Previous work: [Reactive Steering](https://github.com/mc9625/reactive-steering)
 
 ---
 
-*NuvolaProject 2026*
+*NuvolaProject — Art meets AI interpretability*
