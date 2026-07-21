@@ -405,6 +405,11 @@ This is the horizon toward which the work points: not simulating human states in
 
 ---
 
+
+## S5. At the Edge: Semantic Glitch as Aesthetics
+
+At intensities above 10, steering produces coherence degradation: repetitive structures, semantic loops, dissolution of meaning. In prior work (Di Leo & Riposati, 2025), random vectors caused cognitive collapse 12× more frequently than semantic vectors at equivalent intensities. This suggests semantic steering has directionality, it pushes the model somewhere; noise simply destabilises. We read this not as failure but as aesthetic territory: what we call "semantic glitch" or "lucid delirium". Guitar distortion was error before it became a register; these edge effects may turn out similar. The aesthetic claim is speculative, but the steering/prompting ablation of Main 4.6 quantifies one edge of the operating window with a length-robust metric: at α = 12.0, keyword density exceeds prompting while MTLD collapses and grammatical errors emerge, giving the "glitch" a measurable onset.
+
 ## Appendix B (extended): On "Synthetic Embodiment"
 
 We use the word "embodiment" deliberately and cautiously.
