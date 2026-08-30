@@ -8,17 +8,6 @@ Under review at *Leonardo* (MIT Press).
 
 ---
 
-## Files
-
-| File | Description |
-|------|-------------|
-| `PAPER_main.md` | Main manuscript (Markdown) |
-| `PAPER_main.tex` / `PAPER_main.pdf` | Main manuscript (LaTeX source and compiled PDF) |
-| `PAPER_supplementary.md` | Supplementary material (Markdown) |
-| `PAPER_supplementary.tex` / `PAPER_supplementary.pdf` | Supplementary material (LaTeX source and compiled PDF) |
-
-The manuscript was split into main and supplementary parts to meet the journal's length limit. The `.tex` and `.pdf` files are regenerated from the Markdown; the Markdown is the source of record.
-
 ## Abstract
 
 A practice-based research study of activation steering as an artistic medium for inducing simulated affective states in language models. The methodological contribution is that steering vectors are built from sensory and phenomenological descriptions rather than functional labels: imagery of "heaviness, rain, silence, cold" in place of an instruction like "be melancholic." Across five task domains on Llama 3.2 3B the work reports large effects, cross-task consistency, and introspective coherence, and develops a working distinction between *performance* (prompted behaviour) and *disposition* (steered processing). A somatic steering experiment provides evidence that the model's latent space encodes body–mind covariations learnable from text alone. Supplementary material extends the work to a multimodal investigation on Gemma 4 E2B.
