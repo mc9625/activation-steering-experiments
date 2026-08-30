@@ -20,15 +20,6 @@ Steering vectors are extracted by contrastive activation addition (CAA) and inje
 
 Raw generations backing the tables are in `../results/`. The functional-versus-sensory ablation data used for Table 5 is at `../results/fs_rerun/raw_results.csv`.
 
-## Compiling
-
-```bash
-pdflatex PAPER_main.tex && pdflatex PAPER_main.tex
-pdflatex PAPER_supplementary.tex && pdflatex PAPER_supplementary.tex
-```
-
-Run twice so cross-references resolve.
-
 ## Citation
 
 ```bibtex
