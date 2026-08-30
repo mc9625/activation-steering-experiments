@@ -4,7 +4,7 @@
 
 Massimo Di Leo & Gaia Riposati — NuvolaProject, Rome
 
-Under review at *Leonardo* (MIT Press).
+Manuscript currently under peer review. Citation details will be added upon acceptance.
 
 ---
 
@@ -23,14 +23,12 @@ Raw generations backing the tables are in `../results/`. The functional-versus-s
 ## Citation
 
 ```bibtex
-@article{dileo2026disposition,
-  title   = {Disposition, Not Performance: Activation Steering as Artistic
-             Medium for Affective Modulation in Language Models},
-  author  = {Di Leo, Massimo and Riposati, Gaia},
-  journal = {Leonardo},
-  year    = {2026},
-  note    = {Under review},
-  publisher = {MIT Press}
+@unpublished{dileo2026disposition,
+  title  = {Disposition, Not Performance: Activation Steering as Artistic
+            Medium for Affective Modulation in Language Models},
+  author = {Di Leo, Massimo and Riposati, Gaia},
+  year   = {2026},
+  note   = {Manuscript under review}
 }
 ```
 
