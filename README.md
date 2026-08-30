@@ -21,7 +21,7 @@ By downloading and using this software, you agree that you are solely responsibl
 
 NuvolaProject 2026 — Massimo Di Leo & Gaia Riposati
 
-📄 **Paper**: [Disposition, Not Performance: Activation Steering as Artistic Medium for Affective Modulation in Language Models](paper/PAPER_main.md) — under review at *Leonardo* (MIT Press). Supplementary material: [PAPER_supplementary.md](paper/PAPER_supplementary.md).
+📄 **Paper**: "Disposition, Not Performance: Activation Steering as Artistic Medium for Affective Modulation in Language Models" — Manuscript currently under peer review. Citation details will be added upon acceptance.
 
 ---
 
@@ -35,7 +35,7 @@ This repository provides tools for **activation steering** — a technique that 
 - **Inference Engine**: Apply steering at runtime with configurable intensity
 - **Research Interface**: Web UI and API for experiments
 - **Reproducible**: Complete code for replicating our experimental results
-- **Paper & Results**: Full academic paper with experimental data
+- **Paper & Results**: Abstract, method summary and experimental data (full manuscript to follow upon publication)
 
 ---
 
@@ -198,7 +198,6 @@ The full experimental battery spans five steering compounds across five behaviou
 
 Rather than duplicate figures that would drift out of sync with the manuscript, the results and their effect sizes are reported in one place:
 
-- **Paper**: [`paper/PAPER_main.md`](paper/PAPER_main.md) and [`paper/PAPER_supplementary.md`](paper/PAPER_supplementary.md)
 - **Raw data**: [`results/`](results/), with the functional-vs-sensory ablation at `results/fs_rerun/raw_results.csv`
 - **Narrative analysis**: [`results/COMPLETE_ANALYSIS.md`](results/COMPLETE_ANALYSIS.md)
 
@@ -240,7 +239,7 @@ Rather than duplicate figures that would drift out of sync with the manuscript, 
 └── results/               # Experimental data
     └── COMPLETE_ANALYSIS.md
 
-paper/                     # Manuscript (main + supplementary), see paper/README.md
+paper/                     # Abstract and method summary, see paper/README.md
 ```
 
 ---
@@ -332,13 +331,11 @@ Generate with steering.
 If you use this code in your research, please cite:
 
 ```bibtex
-@article{dileo2026disposition,
+@unpublished{dileo2026disposition,
     title={Disposition, Not Performance: Activation Steering as Artistic Medium for Affective Modulation in Language Models},
     author={Di Leo, Massimo and Riposati, Gaia},
-    journal={Leonardo},
     year={2026},
-    note={Under review},
-    publisher={MIT Press}
+    note={Manuscript under review},
 }
 ```
 
@@ -353,9 +350,9 @@ MIT License. See LICENSE file.
 ## Acknowledgments
 
 This work builds on research from:
-- Anthropic (interpretability research)
-- Turner et al. (activation addition)
-- Neel Nanda (TransformerLens)
+- Rimsky et al. (2024), Contrastive Activation Addition — the vector construction used here
+- Turner et al. (2023), ActAdd — activation engineering
+- Anthropic (interpretability and persona vectors research)
 
 ---
 
